@@ -39,28 +39,37 @@ class MapperTest extends PHPUnit_Framework_TestCase
 
   public function testLoad()
   {
-    $id   = 5000;
-    $user = User::load($id);
-    $this->assertEquals($id, $user->id());
+    $user              = new User();
+    $user->name        = 'name' . rand() . time();
+    $user->description = 'desc' . rand() . time();
+    $user->save();
+
+    $loaded = User::load($user->id());
+    $this->assertEquals($user->id(), $loaded->id());
+    $this->compareObjects($user, $loaded);
 
     $user->name        = rand();
     $user->description = rand();
     $user->save();
     $this->assertTrue($user->exists());
 
-    $loadedUser = User::load($id);
+    $loadedUser = User::load($user->id());
     $this->assertTrue($loadedUser->exists());
     $this->compareObjects($user, $loadedUser);
   }
 
   public function testReload()
   {
-    $user              = User::load(5000);
+    $user              = new User();
+    $user->name        = 'name' . rand() . time();
+    $user->description = 'desc' . rand() . time();
+    $user->save();
+
     $user->name        = 'reload' . rand();
     $user->description = 'reload' . rand();
     $user->reload();
 
-    $this->compareObjects($user, User::load(5000));
+    $this->compareObjects($user, User::load($user->id()));
   }
 
   public function testDelete()
