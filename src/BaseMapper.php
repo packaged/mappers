@@ -83,7 +83,7 @@ class BaseMapper
    * @return static
    * @throws \Doctrine\ORM\Mapping\MappingException
    */
-  public function saveAsNew($id = null)
+  public function saveAsNew()
   {
     $metadata = $this->_getMetadata();
     $new      = new static();
@@ -93,7 +93,6 @@ class BaseMapper
     }
     foreach($new->_getKeys() as $key)
     {
-      if (is_array($id))
       $map = $metadata->getFieldMapping($key);
       if(isset($map['id']) && $map['id'])
       {
