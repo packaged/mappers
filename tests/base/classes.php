@@ -55,3 +55,6 @@ $resolver->addConnection('db', $db);
 $resolver->addConnection('sqlite', $sqlite);
 
 \Packaged\Mappers\BaseMapper::setConnectionResolver($resolver);
+
+$tool = new \Doctrine\ORM\Tools\SchemaTool($db);
+$tool->createSchema([$db->getClassMetadata('User')]);
