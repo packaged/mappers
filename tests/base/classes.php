@@ -24,7 +24,7 @@ class User extends \Packaged\Mappers\BaseMapper
 $db = \Doctrine\ORM\EntityManager::create(
   [
     'driver'   => 'pdo_mysql',
-    'host'     => 'x.dev',
+    'host'     => 'localhost',
     'dbname'   => 'cubex',
     'user'     => 'root',
     'password' => ''
