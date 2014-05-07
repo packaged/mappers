@@ -56,5 +56,7 @@ $resolver->addConnection('sqlite', $sqlite);
 
 \Packaged\Mappers\BaseMapper::setConnectionResolver($resolver);
 
-$tool = new \Doctrine\ORM\Tools\SchemaTool($db);
-$tool->createSchema([$db->getClassMetadata('User')]);
+$tool    = new \Doctrine\ORM\Tools\SchemaTool($db);
+$classes = [$db->getClassMetadata('User')];
+$tool->dropSchema($classes);
+$tool->createSchema($classes);
