@@ -131,7 +131,7 @@ class BaseMapper
   public function id()
   {
     $vals = $this->_getKeyValues();
-    if(count($vals) === 1)
+    if(is_array($vals) && count($vals) === 1)
     {
       return reset($vals);
     }
