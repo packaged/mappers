@@ -144,6 +144,22 @@ abstract class BaseMapper
     }
   }
 
+  /**
+   * @param array $criteria
+   * @param null  $order
+   * @param null  $limit
+   * @param null  $offset
+   *
+   * @return array
+   */
+  public static function loadWhere(
+    array $criteria, $order = null, $limit = null, $offset = null
+  )
+  {
+    return static::getEntityManager()->getRepository(get_called_class())
+      ->findBy($criteria, $order, $limit, $offset);
+  }
+
   public static function loadFromMaster($id = null)
   {
     //TODO: use Master EntityManager
