@@ -7,11 +7,11 @@ namespace Packaged\Mappers\Mapping;
 
 use Doctrine\Common\Inflector\Inflector;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
-use Doctrine\Common\Persistence\Mapping\Driver\MappingDriver;
-use Doctrine\ORM\Mapping\MappingException;
+use Doctrine\Common\Persistence\Mapping\Driver\StaticPHPDriver;
+use Doctrine\Common\Persistence\Mapping\MappingException;
 use Packaged\Mappers\BaseMapper;
 
-class AutoMappingDriver implements MappingDriver
+class AutoMappingDriver extends StaticPHPDriver
 {
   /**
    * Loads the metadata for the specified class into the provided container.
@@ -148,17 +148,6 @@ class AutoMappingDriver implements MappingDriver
   }
 
   /**
-   * Gets the names of all mapped classes known to this driver.
-   *
-   * @return array The names of all mapped classes known to this driver.
-   */
-  public function getAllClassNames()
-  {
-    // TODO: Implement getAllClassNames() method.
-    return [];
-  }
-
-  /**
    * Returns whether the class with the specified name should have its metadata loaded.
    * This is only the case if it is either mapped as an Entity or a MappedSuperclass.
    *
@@ -168,6 +157,6 @@ class AutoMappingDriver implements MappingDriver
    */
   public function isTransient($className)
   {
-    return !($className instanceof BaseMapper);
+    return !is_subclass_of($className, 'Packaged\Mappers\BaseMapper');
   }
 }
