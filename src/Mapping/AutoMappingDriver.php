@@ -13,6 +13,15 @@ use Packaged\Mappers\BaseMapper;
 
 class AutoMappingDriver extends StaticPHPDriver
 {
+  public function __construct($paths = null)
+  {
+    if(!$paths)
+    {
+      $paths = [];
+    }
+    parent::__construct((array)$paths);
+  }
+
   /**
    * Loads the metadata for the specified class into the provided container.
    *
