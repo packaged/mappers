@@ -90,6 +90,13 @@ class MapperTest extends PHPUnit_Framework_TestCase
 
   public function testLoad()
   {
+    $this->setExpectedException(
+      '\Packaged\Mappers\Exceptions\InvalidLoadException'
+    );
+    new User('invalid call');
+    User::load(null);
+    $this->setExpectedException(null);
+
     $user              = new User();
     $user->name        = 'name' . rand() . time();
     $user->description = 'desc' . rand() . time();
@@ -107,12 +114,6 @@ class MapperTest extends PHPUnit_Framework_TestCase
     $loadedUser = User::load($user->id());
     $this->assertTrue($loadedUser->exists());
     $this->compareObjects($user, $loadedUser);
-
-    $this->setExpectedException(
-      '\Packaged\Mappers\Exceptions\InvalidLoadException'
-    );
-    new User('invalid call');
-    $this->setExpectedException(null);
   }
 
   public function testReload()
