@@ -32,6 +32,7 @@ abstract class BaseMapper
 
   protected static $_resolver;
   protected static $_service = 'db';
+  protected $_exists = false;
 
   /**
    * @returns bool
@@ -180,8 +181,6 @@ abstract class BaseMapper
       $this->$key = $value;
     }
   }
-
-  protected $_exists = false;
 
   public function setExists($bool = true)
   {
