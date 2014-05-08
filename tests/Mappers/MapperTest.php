@@ -90,12 +90,22 @@ class MapperTest extends PHPUnit_Framework_TestCase
 
   public function testLoad()
   {
-    $this->setExpectedException(
-      '\Packaged\Mappers\Exceptions\InvalidLoadException'
-    );
-    new User('invalid call');
-    User::load(null);
-    $this->setExpectedException(null);
+    try
+    {
+      new User('invalid call');
+      $this->fail('Expected Exception not thrown');
+    }
+    catch(\Packaged\Mappers\Exceptions\InvalidLoadException $e)
+    {
+    }
+    try
+    {
+      User::load(null);
+      $this->fail('Expected Exception not thrown');
+    }
+    catch(\Packaged\Mappers\Exceptions\InvalidLoadException $e)
+    {
+    }
 
     $user              = new User();
     $user->name        = 'name' . rand() . time();
