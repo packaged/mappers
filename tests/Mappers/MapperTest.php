@@ -8,6 +8,57 @@
  */
 class MapperTest extends PHPUnit_Framework_TestCase
 {
+  public function setUp()
+  {
+    $db = \Doctrine\ORM\EntityManager::create(
+      [
+        'driver'   => 'pdo_mysql',
+        'host'     => 'localhost',
+        'dbname'   => 'cubex',
+        'user'     => 'root',
+        'password' => ''
+      ],
+      \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(
+        [dirname(__DIR__)],
+        true
+      )
+    );
+    $db->getConnection()->getConfiguration()->setSQLLogger(
+    //  new \Doctrine\DBAL\Logging\EchoSQLLogger()
+    );
+
+    $sqlite = \Doctrine\ORM\EntityManager::create(
+      [
+        'driver' => 'pdo_sqlite',
+        'path'   => dirname(dirname(__DIR__)) . '/data/db.sqlite',
+      ],
+      \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(
+        [dirname(__DIR__)],
+        true
+      )
+    );
+
+    $resolver = new \Packaged\Mappers\ConnectionResolver();
+    $resolver->addConnection('db', $db);
+    $resolver->addConnection('sqlite', $sqlite);
+
+    \Packaged\Mappers\BaseMapper::setConnectionResolver($resolver);
+
+    $tool    = new \Doctrine\ORM\Tools\SchemaTool($db);
+    $classes = [$db->getClassMetadata('User')];
+    $tool->dropSchema($classes);
+    $tool->createSchema($classes);
+  }
+
+  public function testConnections()
+  {
+    $resolver = \Packaged\Mappers\BaseMapper::getConnectionResolver();
+    $this->setExpectedException('\Packaged\Mappers\Exceptions\MapperException');
+    $resolver->getConnection('DOES NOT EXIST');
+    $this->setExpectedException(null);
+    $resolver->getConnection('db');
+  }
+
   public function compareObjects($obj1, $obj2)
   {
     foreach($obj1 as $k => $v)
@@ -57,7 +108,9 @@ class MapperTest extends PHPUnit_Framework_TestCase
     $this->assertTrue($loadedUser->exists());
     $this->compareObjects($user, $loadedUser);
 
-    $this->setExpectedException('\Packaged\Mappers\Exceptions\InvalidLoadException');
+    $this->setExpectedException(
+      '\Packaged\Mappers\Exceptions\InvalidLoadException'
+    );
     new User('invalid call');
     $this->setExpectedException(null);
   }

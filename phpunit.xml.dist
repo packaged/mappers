@@ -13,6 +13,7 @@
   >
   <testsuites>
     <testsuite name="Packaged Test Suite">
+      <file>./tests/Mappers/SetupTest.php</file>
       <directory>./tests/Mappers</directory>
     </testsuite>
   </testsuites>
