@@ -38,7 +38,8 @@ class AutoMappingDriver extends StaticPHPDriver
       throw new \Exception('Error: class metadata object is the wrong type');
     }
     $refClass = new \ReflectionClass($className);
-    if(strpos($refClass->getDocComment(), '@Table') === false)
+    $classDocBlock = $refClass->getDocComment();
+    if((!$classDocBlock) || (strpos($classDocBlock, '@Table') === false))
     {
       $metadata->setPrimaryTable(['name' => $this->_getTableName($className)]);
     }
@@ -98,16 +99,18 @@ class AutoMappingDriver extends StaticPHPDriver
       'components'
     ];
     $nsParts      = explode('\\',$className);
-    $ignoreFirst  = 1;
 
-    foreach($nsParts as $i => $part)
+    if(count($nsParts) > 1)
     {
-      if($i < $ignoreFirst || in_array(strtolower($part), $excludeParts))
+      $ignoreFirst = 1;
+      foreach($nsParts as $i => $part)
       {
-        unset($nsParts[$i]);
+        if($i < $ignoreFirst || in_array(strtolower($part), $excludeParts))
+        {
+          unset($nsParts[$i]);
+        }
       }
     }
-
     return Inflector::tableize(Inflector::pluralize(implode('', $nsParts)));
   }
 
