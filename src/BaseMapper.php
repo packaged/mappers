@@ -125,12 +125,13 @@ abstract class BaseMapper
    * @throws \Doctrine\ORM\ORMException
    * @throws \Doctrine\ORM\OptimisticLockException
    * @throws \Doctrine\ORM\ORMInvalidArgumentException
+   * @throws InvalidLoadException
    */
-  public static function load($id = null)
+  public static function load($id)
   {
     if($id === null)
     {
-      return new static();
+      throw new InvalidLoadException('No ID passed to load');
     }
     else
     {
