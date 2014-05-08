@@ -31,8 +31,12 @@ abstract class BaseMapper
   public $updatedAt;
 
   protected static $_resolver;
-  protected static $_service = 'db';
   protected $_exists = false;
+
+  public static function getService()
+  {
+    return 'db';
+  }
 
   /**
    * @returns bool
@@ -114,7 +118,7 @@ abstract class BaseMapper
    */
   public static function getEntityManager()
   {
-    return static::getConnectionResolver()->getConnection(static::$_service);
+    return static::getConnectionResolver()->getConnection(static::getService());
   }
 
   /**
