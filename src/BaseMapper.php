@@ -215,6 +215,14 @@ abstract class BaseMapper
     return $this->_exists;
   }
 
+  /**
+   * @PostLoad
+   */
+  public function onLoadSetExists()
+  {
+    $this->setExists(true);
+  }
+
   public function reload()
   {
     static::getEntityManager()->refresh($this);
