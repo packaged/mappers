@@ -10,6 +10,7 @@ namespace Packaged\Mappers;
 
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Packaged\Mappers\Exceptions\InvalidLoadException;
 
 /**
  * Class BaseMapper
@@ -85,7 +86,9 @@ abstract class BaseMapper
   {
     if(func_get_args())
     {
-      throw new \Exception('Cannot construct with ID.  Use Class::load($id)');
+      throw new InvalidLoadException(
+        'Cannot construct with ID.  Use Class::load($id)'
+      );
     }
   }
 
