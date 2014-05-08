@@ -8,7 +8,7 @@ namespace Packaged\Mappers\Mapping;
 use Doctrine\Common\Inflector\Inflector;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Persistence\Mapping\Driver\StaticPHPDriver;
-use Doctrine\Common\Persistence\Mapping\MappingException;
+use Doctrine\ORM\Mapping\MappingException;
 use Packaged\Mappers\BaseMapper;
 
 class AutoMappingDriver extends StaticPHPDriver
@@ -28,9 +28,8 @@ class AutoMappingDriver extends StaticPHPDriver
     {
       throw new \Exception('Error: class metadata object is the wrong type');
     }
-
     $refClass = new \ReflectionClass($className);
-    if($refClass->getDocComment() == "")
+    if(strpos($refClass->getDocComment(), '@Table') === false)
     {
       $metadata->setPrimaryTable(['name' => $this->_getTableName($className)]);
     }
