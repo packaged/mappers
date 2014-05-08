@@ -8,8 +8,79 @@
 
 namespace Packaged\Mappers;
 
-class BaseMapper
+use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
+use Doctrine\ORM\Mapping\ClassMetadata;
+
+/**
+ * Class BaseMapper
+ * @package Packaged\Mappers
+ * @MappedSuperclass
+ * @HasLifecycleCallbacks
+ */
+abstract class BaseMapper
 {
+  /**
+   * @Column(type="datetime")
+   */
+  public $createdAt;
+
+  /**
+   * @Column(type="datetime")
+   */
+  public $updatedAt;
+
+  /**
+   * @returns bool
+   */
+  public static function getAutoTimestamp()
+  {
+    return true;
+  }
+
+  /**
+   * @PrePersist
+   */
+  public function autoDateOnSave()
+  {
+    if(static::getAutoTimestamp())
+    {
+      $this->createdAt = new \DateTime('now');
+      $this->updatedAt = new \DateTime('now');
+    }
+  }
+
+  /**
+   * @PreUpdate
+   */
+  public function autoDateOnUpdate()
+  {
+    if(static::getAutoTimestamp())
+    {
+      $this->updatedAt = new \DateTime('now');
+    }
+  }
+
+  /**
+   * @LoadClassMetadata
+   */
+  public function autoDateRemoveMetadata(LoadClassMetadataEventArgs $eventArgs)
+  {
+    //TODO: this method is not being called for some reason...
+    $metadata = $eventArgs->getClassMetadata();
+    if(!static::getAutoTimestamp() && $metadata instanceof ClassMetadata)
+    {
+      foreach($metadata->fieldMappings as $k => $mapping)
+      {
+        if($mapping['fieldName'] === 'createdAt' ||
+          $mapping['fieldName'] === 'updatedAt'
+        )
+        {
+          unset($metadata->fieldMappings[$k]);
+        }
+      }
+    }
+  }
+
   public function __construct()
   {
     if(func_get_args())
