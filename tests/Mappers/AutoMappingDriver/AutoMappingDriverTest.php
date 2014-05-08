@@ -75,7 +75,7 @@ class AutoMappingDriverTest extends PHPUnit_Framework_TestCase
 
   private function _loadMapperClasses()
   {
-    if(! $this->_loadedMapperClasses)
+    if(!$this->_loadedMapperClasses)
     {
       $mappersDir = __DIR__ . '/MapperClasses';
       $dh         = opendir($mappersDir);
@@ -198,6 +198,12 @@ class AutoMappingDriverTest extends PHPUnit_Framework_TestCase
           'type'       => 'string',
           'id'         => false,
         ],
+        'updatedAt'    => [
+          'fieldName'  => 'updatedAt',
+          'columnName' => 'updated_at',
+          'type'       => 'datetime',
+          'id'         => false
+        ]
       ],
       $meta->fieldMappings
     );
@@ -217,6 +223,7 @@ class AutoMappingDriverTest extends PHPUnit_Framework_TestCase
         'last_viewed_on' => 'lastViewedOn',
         'expiry_date'    => 'expiryDate',
         'comment'        => 'comment',
+        'updated_at'     => 'updatedAt'
       ],
       $meta->fieldNames
     );
@@ -236,6 +243,7 @@ class AutoMappingDriverTest extends PHPUnit_Framework_TestCase
         'lastViewedOn' => 'last_viewed_on',
         'expiryDate'   => 'expiry_date',
         'comment'      => 'comment',
+        'updatedAt'    => 'updated_at'
       ],
       $meta->columnNames
     );
