@@ -1,6 +1,8 @@
 <?php
 namespace Packaged\Mappers;
 
+use Packaged\Mappers\Exceptions\MapperException;
+
 class ConnectionResolver implements IConnectionResolver
 {
   protected $_connections;
@@ -11,6 +13,7 @@ class ConnectionResolver implements IConnectionResolver
     {
       return $this->_connections[$name];
     }
+    throw new MapperException('Connection (' . $name . ') not found');
   }
 
   public function addConnection($name, $connection)
