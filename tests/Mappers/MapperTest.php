@@ -61,7 +61,7 @@ class MapperTest extends PHPUnit_Framework_TestCase
 
   public function compareObjects($obj1, $obj2)
   {
-    $this->assertEquals(print_r($obj1, true), print_r($obj2, true));
+    $this->assertEquals((array)$obj1, (array)$obj2);
   }
 
   public function testNew()
