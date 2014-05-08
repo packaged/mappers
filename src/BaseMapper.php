@@ -186,9 +186,10 @@ abstract class BaseMapper
     {
       $new->$field = $this->$field;
     }
-    $keys = $this->_getKeys();
-    if(count($keys) === 1)
+
+    if(!$this->isCompositeId())
     {
+      $keys = $this->_getKeys();
       $new->hydrate([reset($keys) => null]);
     }
     $new->save();
