@@ -104,19 +104,24 @@ class MapperTest extends PHPUnit_Framework_TestCase
     $user->name        = 'name' . rand() . time();
     $user->description = 'desc' . rand() . time();
     $user->save();
+    $this->assertTrue($user->exists());
 
     $loaded = User::load($user->id());
     $this->assertEquals($user->id(), $loaded->id());
     $this->compareObjects($user, $loaded);
 
-    $user->name        = rand();
-    $user->description = rand();
-    $user->save();
-    $this->assertTrue($user->exists());
-
     $loadedUser = User::load($user->id());
     $this->assertTrue($loadedUser->exists());
     $this->compareObjects($user, $loadedUser);
+
+    $newUser = $user->saveAsNew();
+    $user->getEntityManager()->detach($user);
+    $newUser->getEntityManager()->detach($newUser);
+    $this->compareObjects(User::loadWhere([]), [$user, $newUser]);
+
+    $user->name = 'name' . rand() . time();
+    $user->save();
+    $this->compareObjects(User::loadWhere(['name' => $user->name]), [$user]);
   }
 
   public function testReload()
