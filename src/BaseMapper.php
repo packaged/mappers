@@ -85,22 +85,27 @@ class BaseMapper
    */
   public function saveAsNew()
   {
-    $metadata = $this->_getMetadata();
-    $new      = new static();
-    foreach($metadata->fieldNames as $field)
+    // timestamps
+    $new = new static();
+    foreach($this->_getMetadata()->fieldNames as $field)
     {
       $new->$field = $this->$field;
     }
-    foreach($new->_getKeys() as $key)
+    $keys = $this->_getKeys();
+    if(count($keys) === 1)
     {
-      $map = $metadata->getFieldMapping($key);
-      if(isset($map['id']) && $map['id'])
-      {
-        $new->$key = null;
-      }
+      $new->hydrate([reset($keys) => null]);
     }
     $new->save();
     return $new;
+  }
+
+  public function hydrate(array $values)
+  {
+    foreach($values as $key => $value)
+    {
+      $this->$key = $value;
+    }
   }
 
   protected $_exists = false;
