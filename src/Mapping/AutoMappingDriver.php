@@ -58,14 +58,26 @@ class AutoMappingDriver extends StaticPHPDriver
       if(!$mapping)
       {
         $columnName = Inflector::tableize($propName);
-        $metadata->mapField(
-          [
-            'fieldName' => $propName,
-            'columnName' => $columnName,
-            'type' => $this->_getDefaultDataType($columnName),
-            'id' => $columnName == 'id'
-          ]
-        );
+
+        $fieldMap = [
+          'fieldName' => $propName,
+          'columnName' => $columnName,
+          'type' => $this->_getDefaultDataType($columnName),
+          'id' => $columnName == 'id'
+        ];
+
+        if($columnName == 'id')
+        {
+          $fieldMap['autoincrement'] = true;
+          $fieldMap['unsigned'] = true;
+        }
+        else if(in_array($columnName, ['price', 'tax', 'amount', 'cost', 'total']))
+        {
+          // DECIMAL(10,2)
+          $fieldMap['precision'] = 10;
+          $fieldMap['scale'] = 2;
+        }
+        $metadata->mapField($fieldMap);
       }
     }
   }
