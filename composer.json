@@ -1,6 +1,7 @@
 {
   "name":              "packaged/mappers",
   "license":           "MIT",
+  "minimum-stability": "dev",
   "authors":           [
     {
       "name":  "Brooke Bryan",
@@ -13,7 +14,7 @@
   ],
   "require":           {
     "php":             ">=5.4.0",
-    "doctrine/orm":    "2.4.x",
+    "doctrine/orm":    "2.5.*@dev",
     "phpunit/phpunit": "4.*"
   },
   "autoload":          {
