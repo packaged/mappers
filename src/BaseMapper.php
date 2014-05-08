@@ -30,6 +30,9 @@ abstract class BaseMapper
    */
   public $updatedAt;
 
+  protected static $_resolver;
+  protected static $_service = 'db';
+
   /**
    * @returns bool
    */
@@ -92,8 +95,6 @@ abstract class BaseMapper
     }
   }
 
-  protected static $_resolver;
-
   public static function setConnectionResolver(IConnectionResolver $resolver)
   {
     static::$_resolver = $resolver;
@@ -106,8 +107,6 @@ abstract class BaseMapper
   {
     return static::$_resolver;
   }
-
-  protected static $_service = 'db';
 
   /**
    * @return \Doctrine\ORM\EntityManager
