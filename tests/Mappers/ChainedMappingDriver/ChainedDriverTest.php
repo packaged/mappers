@@ -47,6 +47,62 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
     }
   }
 
+  public function testAllClassNames()
+  {
+    $driver = $this->_getDriver();
+    $expected =[
+      'AnnotatedMapper',
+      'PartAnnotatedMapper',
+      'UnannotatedMapper'
+    ];
+    $actual = $driver->getAllClassNames();
+    // Order is not important
+    sort($expected);
+    sort($actual);
+    $this->assertEquals($expected, $actual);
+  }
+
+  public function testPaths()
+  {
+    $driver = new ChainedDriver([]);
+    $this->assertEquals([], $driver->getPaths());
+
+    $driver->addPaths(['/tmp/classes', __DIR__ . '/Mappers']);
+    $this->assertEquals(['/tmp/classes', __DIR__ . '/Mappers'], $driver->getPaths());
+
+    $driver->addPaths([__DIR__ . '/test', '/tmp/otherclasses']);
+    $this->assertEquals(
+      ['/tmp/classes', __DIR__ . '/Mappers', __DIR__ . '/test', '/tmp/otherclasses'],
+      $driver->getPaths()
+    );
+
+    $driver->addPaths(['/tmp/classes']);
+    $this->assertEquals(
+      ['/tmp/classes', __DIR__ . '/Mappers', __DIR__ . '/test', '/tmp/otherclasses'],
+      $driver->getPaths()
+    );
+  }
+
+  /**
+   * @dataProvider transientData
+   */
+  public function testTransient($className, $isTransient)
+  {
+    $this->_loadMappers();
+    $driver = $this->_getDriver();
+    $this->assertEquals($driver->isTransient($className), $isTransient);
+  }
+
+  public function transientData()
+  {
+    return [
+      ['AnnotatedMapper', false],
+      ['PartAnnotatedMapper', false],
+      ['UnannotatedMapper', false],
+      ['ChainedNotAMapper', true]
+    ];
+  }
+
   /**
    * @dataProvider mapperClassesData
    *
@@ -55,7 +111,7 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
    *
    * @throws Exception
    */
-  public function testMapperClass($className, $expectedFieldMappings)
+  public function testFieldMappings($className, $expectedFieldMappings)
   {
     $this->_loadMappers();
     $driver = $this->_getDriver();
