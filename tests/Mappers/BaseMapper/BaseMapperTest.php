@@ -6,10 +6,12 @@
  * Date: 15/04/2014
  * Time: 14:44
  */
-class MapperTest extends PHPUnit_Framework_TestCase
+class BaseMapperTest extends PHPUnit_Framework_TestCase
 {
   public function setUp()
   {
+    require_once __DIR__ . '/User.php';
+
     $db = \Doctrine\ORM\EntityManager::create(
       [
         'driver'   => 'pdo_mysql',
