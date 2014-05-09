@@ -7,6 +7,7 @@ namespace Packaged\Mappers\Mapping;
 
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriver;
+use Doctrine\ORM\Mapping\MappingException;
 
 class ChainedDriver implements MappingDriver
 {
@@ -15,7 +16,7 @@ class ChainedDriver implements MappingDriver
 
   /**
    * @param MappingDriver[] $drivers
-   * @param string[] $paths
+   * @param string[]        $paths
    */
   public function __construct(array $drivers, array $paths = null)
   {
@@ -56,7 +57,15 @@ class ChainedDriver implements MappingDriver
   {
     foreach($this->_drivers as $driver)
     {
-      $driver->loadMetadataForClass($className, $metadata);
+      try
+      {
+        $driver->loadMetadataForClass($className, $metadata);
+      }
+      catch(MappingException $e)
+      {
+        // If there was an exception then assume this entity
+        // isn't compatible with this mapping driver
+      }
     }
   }
 
