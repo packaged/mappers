@@ -49,13 +49,13 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
 
   public function testAllClassNames()
   {
-    $driver = $this->_getDriver();
-    $expected =[
+    $driver   = $this->_getDriver();
+    $expected = [
       'AnnotatedMapper',
       'PartAnnotatedMapper',
       'UnannotatedMapper'
     ];
-    $actual = $driver->getAllClassNames();
+    $actual   = $driver->getAllClassNames();
     // Order is not important
     sort($expected);
     sort($actual);
@@ -68,17 +68,30 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
     $this->assertEquals([], $driver->getPaths());
 
     $driver->addPaths(['/tmp/classes', __DIR__ . '/Mappers']);
-    $this->assertEquals(['/tmp/classes', __DIR__ . '/Mappers'], $driver->getPaths());
+    $this->assertEquals(
+      ['/tmp/classes', __DIR__ . '/Mappers'],
+      $driver->getPaths()
+    );
 
     $driver->addPaths([__DIR__ . '/test', '/tmp/otherclasses']);
     $this->assertEquals(
-      ['/tmp/classes', __DIR__ . '/Mappers', __DIR__ . '/test', '/tmp/otherclasses'],
+      [
+        '/tmp/classes',
+        __DIR__ . '/Mappers',
+        __DIR__ . '/test',
+        '/tmp/otherclasses'
+      ],
       $driver->getPaths()
     );
 
     $driver->addPaths(['/tmp/classes']);
     $this->assertEquals(
-      ['/tmp/classes', __DIR__ . '/Mappers', __DIR__ . '/test', '/tmp/otherclasses'],
+      [
+        '/tmp/classes',
+        __DIR__ . '/Mappers',
+        __DIR__ . '/test',
+        '/tmp/otherclasses'
+      ],
       $driver->getPaths()
     );
   }
