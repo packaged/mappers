@@ -50,13 +50,29 @@ class MapperTest extends PHPUnit_Framework_TestCase
     $tool->createSchema($classes);
   }
 
-  public function testConnections()
+  /**
+   * @dataProvider connectionsData
+   * @param $connectionName
+   * @param $expectedClass
+   * @param $expectedException
+   */
+  public function testConnections($connectionName, $expectedClass, $expectedException)
   {
     $resolver = \Packaged\Mappers\BaseMapper::getConnectionResolver();
-    $this->setExpectedException('\Packaged\Mappers\Exceptions\MapperException');
-    $resolver->getConnection('DOES NOT EXIST');
-    $this->setExpectedException(null);
-    $resolver->getConnection('db');
+    $this->setExpectedException($expectedException);
+    $this->assertInstanceOf(
+      $expectedClass,
+      $resolver->getConnection($connectionName)
+    );
+  }
+
+  public function connectionsData()
+  {
+    return [
+      ['db', 'Doctrine\ORM\EntityManager', null],
+      ['sqlite', 'Doctrine\ORM\EntityManager', null],
+      ['DOES NOT EXIST', null, '\Packaged\Mappers\Exceptions\MapperException']
+    ];
   }
 
   public function compareObjects($obj1, $obj2)
