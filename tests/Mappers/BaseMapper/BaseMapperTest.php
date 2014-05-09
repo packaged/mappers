@@ -11,6 +11,7 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
   public function setUp()
   {
     require_once __DIR__ . '/User.php';
+    require_once __DIR__ . '/Person.php';
 
     $db = \Doctrine\ORM\EntityManager::create(
       [
@@ -47,7 +48,7 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     \Packaged\Mappers\BaseMapper::setConnectionResolver($resolver);
 
     $tool    = new \Doctrine\ORM\Tools\SchemaTool($db);
-    $classes = [$db->getClassMetadata('User')];
+    $classes = [$db->getClassMetadata('User'), $db->getClassMetadata('Person')];
     $tool->dropSchema($classes);
     $tool->createSchema($classes);
   }
@@ -170,5 +171,49 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     $deleted = User::load($id);
     $this->assertFalse($deleted->exists());
     $this->compareObjects($deleted, new User());
+  }
+
+  public function testValidationFailure()
+  {
+    $person = new Person();
+    // Must be between 2 and 32 characters
+    $person->name = '';
+    // no validation
+    $person->description = 'test description';
+    // must end with "test"
+    $person->testField = 'some data';
+
+    $this->assertFalse($person->validate(false));
+    $this->assertFalse($person->validateField('name', false));
+    $this->assertFalse($person->validateField('testField', false));
+
+    $this->setExpectedException(
+      '\Respect\Validation\Exceptions\AllOfException',
+      'These rules must pass for ""'
+    );
+    $person->save();
+  }
+
+  public function testValidationPass()
+  {
+    $person = new Person();
+    $person->name = 'Test User';
+    $person->description = 'Test description';
+    $person->testField = 'test field test';
+    $this->assertTrue($person->validate(false));
+    $this->assertTrue($person->validateField('name', false));
+    $this->assertTrue($person->validateField('testField', false));
+    $person->save();
+  }
+
+  public function testFieldValidationFailure()
+  {
+    $person            = new Person();
+    $person->testField = 'test data';
+    $this->setExpectedException(
+      '\Respect\Validation\Exceptions\AllOfException',
+      'These rules must pass for "test data"'
+    );
+    $person->validateField('testField');
   }
 }

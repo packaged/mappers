@@ -11,6 +11,7 @@ namespace Packaged\Mappers;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
+use Respect\Validation\Validator;
 
 /**
  * Class BaseMapper
@@ -32,6 +33,12 @@ abstract class BaseMapper
 
   protected static $_resolver;
   protected $_exists = false;
+  /**
+   * @var Validator[]
+   */
+  protected $_validators = [];
+
+  protected $_validationErrors = [];
 
   public static function getService()
   {
@@ -49,24 +56,78 @@ abstract class BaseMapper
   /**
    * @PrePersist
    */
-  public function autoDateOnSave()
+  public function prePersist()
   {
     if(static::getAutoTimestamp())
     {
       $this->createdAt = new \DateTime('now');
       $this->updatedAt = new \DateTime('now');
     }
+    $this->validate();
   }
 
   /**
    * @PreUpdate
    */
-  public function autoDateOnUpdate()
+  public function preUpdate()
   {
     if(static::getAutoTimestamp())
     {
       $this->updatedAt = new \DateTime('now');
     }
+    $this->validate();
+  }
+
+  /**
+   * Validate the whole entity or a single field
+   *
+   * @param bool       $throwExceptions If true then throw exceptions if
+   *                                    validation fails, otherwise return
+   *                                    true/false
+   *
+   * @return bool
+   */
+  public function validate($throwExceptions = true)
+  {
+    $allOk = true;
+    foreach($this->_validators as $fieldName => $validator)
+    {
+      if(property_exists($this, $fieldName))
+      {
+        if($throwExceptions)
+        {
+          $validator->assert($this->$fieldName);
+        }
+        else
+        {
+          if(!$validator->validate($this->$fieldName))
+          {
+            $allOk = false;
+          }
+        }
+      }
+    }
+    return $allOk;
+  }
+
+  public function validateField($fieldName, $throwExceptions = true)
+  {
+    $result = true;
+    if(isset($this->_validators[$fieldName])
+      && property_exists($this, $fieldName)
+    )
+    {
+      $validator = $this->_validators[$fieldName];
+      if($throwExceptions)
+      {
+        $validator->assert($this->$fieldName);
+      }
+      else
+      {
+        $result = $validator->validate($this->$fieldName);
+      }
+    }
+    return $result;
   }
 
   /**
@@ -98,6 +159,12 @@ abstract class BaseMapper
         'Cannot construct with ID.  Use Class::load($id)'
       );
     }
+
+    $this->_configure();
+  }
+
+  protected function _configure()
+  {
   }
 
   public static function setConnectionResolver(IConnectionResolver $resolver)
@@ -267,4 +334,13 @@ abstract class BaseMapper
   {
     return count($this->id()) > 1;
   }
-} 
+
+  /**
+   * @param string    $fieldName
+   * @param Validator $validator
+   */
+  protected function _addValidator($fieldName, Validator $validator)
+  {
+    $this->_validators[$fieldName] = $validator;
+  }
+}
