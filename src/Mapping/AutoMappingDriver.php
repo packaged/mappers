@@ -43,8 +43,9 @@ class AutoMappingDriver extends StaticPHPDriver
       $metadata->setPrimaryTable(['name' => $this->_getTableName($className)]);
     }
 
-    $seenCreatedAt = false;
-    $seenUpdatedAt = false;
+    $seenCreatedAt     = false;
+    $seenUpdatedAt     = false;
+    $needAutoGenerator = false;
 
     foreach($refClass->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop)
     {
@@ -74,14 +75,14 @@ class AutoMappingDriver extends StaticPHPDriver
         $fieldMap = [
           'fieldName'  => $propName,
           'columnName' => $columnName,
-          'type'       => $this->_getDefaultDataType($columnName),
-          'id'         => $columnName == 'id'
+          'type'       => $this->_getDefaultDataType($columnName)
         ];
-
         if($columnName == 'id')
         {
+          $fieldMap['id']            = true;
           $fieldMap['autoincrement'] = true;
           $fieldMap['unsigned']      = true;
+          $needAutoGenerator         = true;
         }
         else if(in_array(
           $columnName,
@@ -97,8 +98,17 @@ class AutoMappingDriver extends StaticPHPDriver
       }
     }
 
+    if($needAutoGenerator && (!$metadata->usesIdGenerator()))
+    {
+      $metadata->setIdGeneratorType(
+        \Doctrine\ORM\Mapping\ClassMetadata::GENERATOR_TYPE_AUTO
+      );
+    }
+
     // Add auto timestamp fields if required
-    if((! $this->isTransient($className)) && call_user_func($className . '::getAutoTimestamp'))
+    if((!$this->isTransient($className))
+      && call_user_func($className . '::getAutoTimestamp')
+    )
     {
       if(!$seenCreatedAt)
       {
@@ -107,7 +117,6 @@ class AutoMappingDriver extends StaticPHPDriver
             'fieldName'  => 'createdAt',
             'columnName' => call_user_func($className . '::getCreatedAtColumn'),
             'type'       => 'datetime',
-            'id'         => false
           ]
         );
       }
@@ -118,7 +127,6 @@ class AutoMappingDriver extends StaticPHPDriver
             'fieldName'  => 'updatedAt',
             'columnName' => call_user_func($className . '::getUpdatedAtColumn'),
             'type'       => 'datetime',
-            'id'         => false
           ]
         );
       }
