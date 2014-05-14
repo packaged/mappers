@@ -8,8 +8,6 @@
 
 namespace Packaged\Mappers;
 
-use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
-use Doctrine\ORM\Mapping\ClassMetadata;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Respect\Validation\Validator;
 
