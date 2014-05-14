@@ -133,27 +133,6 @@ abstract class BaseMapper
     return $result;
   }
 
-  /**
-   * @LoadClassMetadata
-   */
-  public function autoDateRemoveMetadata(LoadClassMetadataEventArgs $eventArgs)
-  {
-    //TODO: this method is not being called for some reason...
-    $metadata = $eventArgs->getClassMetadata();
-    if(!static::getAutoTimestamp() && $metadata instanceof ClassMetadata)
-    {
-      foreach($metadata->fieldMappings as $k => $mapping)
-      {
-        if($mapping['fieldName'] === 'createdAt' ||
-          $mapping['fieldName'] === 'updatedAt'
-        )
-        {
-          unset($metadata->fieldMappings[$k]);
-        }
-      }
-    }
-  }
-
   public function __construct()
   {
     if(func_get_args())
