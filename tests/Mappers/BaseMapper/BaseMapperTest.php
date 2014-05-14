@@ -1,4 +1,8 @@
 <?php
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\Tools\Setup;
+use Packaged\Mappers\Mapping\AutoMappingDriver;
+use Packaged\Mappers\Mapping\ChainedDriver;
 
 /**
  * Created by PhpStorm.
@@ -13,6 +17,17 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/User.php';
     require_once __DIR__ . '/Person.php';
 
+    $conf = Setup::createConfiguration(true);
+    $conf->setMetadataDriverImpl(
+      new ChainedDriver(
+        [
+          (new Configuration())->newDefaultAnnotationDriver(),
+          new AutoMappingDriver()
+        ],
+        [__DIR__ . '/Mappers']
+      )
+    );
+
     $db = \Doctrine\ORM\EntityManager::create(
       [
         'driver'   => 'pdo_mysql',
@@ -21,14 +36,11 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
         'user'     => 'root',
         'password' => ''
       ],
-      \Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration(
-        [dirname(__DIR__)],
-        true
-      )
+      $conf
     );
-    $db->getConnection()->getConfiguration()->setSQLLogger(
-    //  new \Doctrine\DBAL\Logging\EchoSQLLogger()
-    );
+    /*$db->getConnection()->getConfiguration()->setSQLLogger(
+      new \Doctrine\DBAL\Logging\EchoSQLLogger()
+    );*/
 
     $sqlite = \Doctrine\ORM\EntityManager::create(
       [
@@ -55,11 +67,14 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
 
   /**
    * @dataProvider connectionsData
+   *
    * @param $connectionName
    * @param $expectedClass
    * @param $expectedException
    */
-  public function testConnections($connectionName, $expectedClass, $expectedException)
+  public function testConnections(
+    $connectionName, $expectedClass, $expectedException
+  )
   {
     $resolver = \Packaged\Mappers\BaseMapper::getConnectionResolver();
     $this->setExpectedException($expectedException);
@@ -78,11 +93,6 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     ];
   }
 
-  public function compareObjects($obj1, $obj2)
-  {
-    $this->assertEquals((array)$obj1, (array)$obj2);
-  }
-
   public function testNew()
   {
     $user              = new User();
@@ -98,6 +108,11 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     $user = $user->saveAsNew();
     $this->assertNotSame($id, $user->id());
     $this->compareObjects($user, User::load($user->id()));
+  }
+
+  public function compareObjects($obj1, $obj2)
+  {
+    $this->assertEquals((array)$obj1, (array)$obj2);
   }
 
   public function testLoad()
@@ -196,10 +211,10 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
 
   public function testValidationPass()
   {
-    $person = new Person();
-    $person->name = 'Test User';
+    $person              = new Person();
+    $person->name        = 'Test User';
     $person->description = 'Test description';
-    $person->testField = 'test field test';
+    $person->testField   = 'test field test';
     $this->assertTrue($person->validate(false));
     $this->assertTrue($person->validateField('name', false));
     $this->assertTrue($person->validateField('testField', false));

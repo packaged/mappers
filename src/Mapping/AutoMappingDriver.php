@@ -9,7 +9,6 @@ use Doctrine\Common\Inflector\Inflector;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Persistence\Mapping\Driver\StaticPHPDriver;
 use Doctrine\ORM\Mapping\MappingException;
-use Packaged\Mappers\BaseMapper;
 
 class AutoMappingDriver extends StaticPHPDriver
 {
@@ -33,20 +32,32 @@ class AutoMappingDriver extends StaticPHPDriver
    */
   public function loadMetadataForClass($className, ClassMetadata $metadata)
   {
-    if(! ($metadata instanceof \Doctrine\ORM\Mapping\ClassMetadata))
+    if(!($metadata instanceof \Doctrine\ORM\Mapping\ClassMetadata))
     {
       throw new \Exception('Error: class metadata object is the wrong type');
     }
-    $refClass = new \ReflectionClass($className);
+    $refClass      = new \ReflectionClass($className);
     $classDocBlock = $refClass->getDocComment();
     if((!$classDocBlock) || (strpos($classDocBlock, '@Table') === false))
     {
       $metadata->setPrimaryTable(['name' => $this->_getTableName($className)]);
     }
 
+    $seenCreatedAt = false;
+    $seenUpdatedAt = false;
+
     foreach($refClass->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop)
     {
       $propName = $prop->getName();
+      if($propName == 'createdAt')
+      {
+        $seenCreatedAt = true;
+      }
+      else if($propName == 'updatedAt')
+      {
+        $seenUpdatedAt = true;
+      }
+
       try
       {
         $mapping = $metadata->getFieldMapping($propName);
@@ -61,24 +72,55 @@ class AutoMappingDriver extends StaticPHPDriver
         $columnName = Inflector::tableize($propName);
 
         $fieldMap = [
-          'fieldName' => $propName,
+          'fieldName'  => $propName,
           'columnName' => $columnName,
-          'type' => $this->_getDefaultDataType($columnName),
-          'id' => $columnName == 'id'
+          'type'       => $this->_getDefaultDataType($columnName),
+          'id'         => $columnName == 'id'
         ];
 
         if($columnName == 'id')
         {
           $fieldMap['autoincrement'] = true;
-          $fieldMap['unsigned'] = true;
+          $fieldMap['unsigned']      = true;
         }
-        else if(in_array($columnName, ['price', 'tax', 'amount', 'cost', 'total']))
+        else if(in_array(
+          $columnName,
+          ['price', 'tax', 'amount', 'cost', 'total']
+        )
+        )
         {
           // DECIMAL(10,2)
           $fieldMap['precision'] = 10;
-          $fieldMap['scale'] = 2;
+          $fieldMap['scale']     = 2;
         }
         $metadata->mapField($fieldMap);
+      }
+    }
+
+    // Add auto timestamp fields if required
+    if((! $this->isTransient($className)) && call_user_func($className . '::getAutoTimestamp'))
+    {
+      if(!$seenCreatedAt)
+      {
+        $metadata->mapField(
+          [
+            'fieldName'  => 'createdAt',
+            'columnName' => call_user_func($className . '::getCreatedAtColumn'),
+            'type'       => 'datetime',
+            'id'         => false
+          ]
+        );
+      }
+      if(!$seenUpdatedAt)
+      {
+        $metadata->mapField(
+          [
+            'fieldName'  => 'updatedAt',
+            'columnName' => call_user_func($className . '::getUpdatedAtColumn'),
+            'type'       => 'datetime',
+            'id'         => false
+          ]
+        );
       }
     }
   }
@@ -98,7 +140,7 @@ class AutoMappingDriver extends StaticPHPDriver
       'modules',
       'components'
     ];
-    $nsParts      = explode('\\',$className);
+    $nsParts      = explode('\\', $className);
 
     if(count($nsParts) > 1)
     {
@@ -123,7 +165,7 @@ class AutoMappingDriver extends StaticPHPDriver
    */
   private function _getDefaultDataType($columnName)
   {
-    $parts = explode("_", $columnName);
+    $parts    = explode("_", $columnName);
     $lastPart = end($parts);
 
     $type = null;
@@ -144,7 +186,7 @@ class AutoMappingDriver extends StaticPHPDriver
         break;
     }
 
-    if(! $type)
+    if(!$type)
     {
       switch($lastPart)
       {
@@ -162,7 +204,7 @@ class AutoMappingDriver extends StaticPHPDriver
       }
     }
 
-    if(! $type)
+    if(!$type)
     {
       $type = 'string';
     }

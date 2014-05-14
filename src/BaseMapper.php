@@ -21,14 +21,7 @@ use Respect\Validation\Validator;
  */
 abstract class BaseMapper
 {
-  /**
-   * @Column(type="datetime")
-   */
   public $createdAt;
-
-  /**
-   * @Column(type="datetime")
-   */
   public $updatedAt;
 
   protected static $_resolver;
@@ -51,6 +44,16 @@ abstract class BaseMapper
   public static function getAutoTimestamp()
   {
     return true;
+  }
+
+  public static function getCreatedAtColumn()
+  {
+    return 'created_at';
+  }
+
+  public static function getUpdatedAtColumn()
+  {
+    return 'updated_at';
   }
 
   /**

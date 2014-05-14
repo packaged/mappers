@@ -14,39 +14,6 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
 {
   private $_loadedMappers = false;
 
-  private function _getDriver()
-  {
-    return new ChainedDriver(
-      [
-        (new Configuration())->newDefaultAnnotationDriver(),
-        new AutoMappingDriver()
-      ],
-      [__DIR__ . '/Mappers']
-    );
-  }
-
-  private function _loadMappers()
-  {
-    if(!$this->_loadedMappers)
-    {
-      $mappersDir = __DIR__ . '/Mappers';
-      $dh         = opendir($mappersDir);
-      if(!$dh)
-      {
-        throw new Exception('Error loading mapper classes');
-      }
-      while(($file = readdir($dh)))
-      {
-        if(substr($file, -4) == '.php')
-        {
-          require_once $mappersDir . '/' . $file;
-        }
-      }
-      closedir($dh);
-      $this->_loadedMappers = true;
-    }
-  }
-
   public function testAllClassNames()
   {
     $driver   = $this->_getDriver();
@@ -60,6 +27,17 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
     sort($expected);
     sort($actual);
     $this->assertEquals($expected, $actual);
+  }
+
+  private function _getDriver()
+  {
+    return new ChainedDriver(
+      [
+        (new Configuration())->newDefaultAnnotationDriver(),
+        new AutoMappingDriver()
+      ],
+      [__DIR__ . '/Mappers']
+    );
   }
 
   public function testPaths()
@@ -104,6 +82,28 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
     $this->_loadMappers();
     $driver = $this->_getDriver();
     $this->assertEquals($driver->isTransient($className), $isTransient);
+  }
+
+  private function _loadMappers()
+  {
+    if(!$this->_loadedMappers)
+    {
+      $mappersDir = __DIR__ . '/Mappers';
+      $dh         = opendir($mappersDir);
+      if(!$dh)
+      {
+        throw new Exception('Error loading mapper classes');
+      }
+      while(($file = readdir($dh)))
+      {
+        if(substr($file, -4) == '.php')
+        {
+          require_once $mappersDir . '/' . $file;
+        }
+      }
+      closedir($dh);
+      $this->_loadedMappers = true;
+    }
   }
 
   public function transientData()
@@ -215,26 +215,6 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
             'precision'  => 0,
             'columnName' => 'lastLogin',
           ],
-          'createdAt'   => [
-            'fieldName'  => 'createdAt',
-            'type'       => 'datetime',
-            'scale'      => 0,
-            'length'     => null,
-            'unique'     => false,
-            'nullable'   => false,
-            'precision'  => 0,
-            'columnName' => 'createdAt',
-          ],
-          'updatedAt'   => [
-            'fieldName'  => 'updatedAt',
-            'type'       => 'datetime',
-            'scale'      => 0,
-            'length'     => null,
-            'unique'     => false,
-            'nullable'   => false,
-            'precision'  => 0,
-            'columnName' => 'updatedAt',
-          ],
           'id'          => [
             'fieldName'     => 'id',
             'columnName'    => 'id',
@@ -253,6 +233,18 @@ class ChainedDriverTest extends PHPUnit_Framework_TestCase
             'fieldName'  => 'createdOn',
             'columnName' => 'created_on',
             'type'       => 'date',
+            'id'         => false,
+          ],
+          'createdAt'   => [
+            'fieldName'  => 'createdAt',
+            'columnName' => 'created_at',
+            'type'       => 'datetime',
+            'id'         => false,
+          ],
+          'updatedAt'   => [
+            'fieldName'  => 'updatedAt',
+            'columnName' => 'updated_at',
+            'type'       => 'datetime',
             'id'         => false,
           ],
         ]
