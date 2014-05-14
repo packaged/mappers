@@ -21,7 +21,13 @@ use Respect\Validation\Validator;
  */
 abstract class BaseMapper
 {
+  /**
+   * @var \DateTime|null
+   */
   public $createdAt;
+  /**
+   * @var \DateTime|null
+   */
   public $updatedAt;
 
   protected static $_resolver;
