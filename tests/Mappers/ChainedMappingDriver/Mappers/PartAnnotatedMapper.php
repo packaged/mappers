@@ -2,12 +2,12 @@
 /**
  * @author  Richard.Gooding
  */
-use Packaged\Mappers\BaseMapper;
+use Packaged\Mappers\DoctrineMapper;
 
 /**
  * @Entity
  */
-class PartAnnotatedMapper extends BaseMapper
+class PartAnnotatedMapper extends DoctrineMapper
 {
   public $id;
   public $username;

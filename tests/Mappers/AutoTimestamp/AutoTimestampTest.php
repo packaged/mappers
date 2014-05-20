@@ -3,7 +3,7 @@ use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\ORM\Tools\Setup;
-use Packaged\Mappers\BaseMapper;
+use Packaged\Mappers\DoctrineMapper;
 use Packaged\Mappers\ConnectionResolver;
 use Packaged\Mappers\Mapping\AutoMappingDriver;
 use Packaged\Mappers\Mapping\ChainedDriver;
@@ -52,7 +52,7 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
     $this->_resolver = new ConnectionResolver();
     $this->_resolver->addConnection('db', $db);
 
-    BaseMapper::setConnectionResolver($this->_resolver);
+    DoctrineMapper::setConnectionResolver($this->_resolver);
 
     $tool    = new SchemaTool($db);
     $classes = [

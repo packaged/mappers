@@ -3,7 +3,7 @@
 /**
  * @Entity @Table(name="users")
  **/
-class User extends \Packaged\Mappers\BaseMapper
+class User extends \Packaged\Mappers\DoctrineMapper
 {
   /**
    * @Id @Column(type="integer") @GeneratedValue

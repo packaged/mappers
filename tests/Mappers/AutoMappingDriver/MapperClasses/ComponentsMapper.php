@@ -5,9 +5,9 @@
 
 namespace MappersTests\Components\TestComponent;
 
-use Packaged\Mappers\BaseMapper;
+use Packaged\Mappers\DoctrineMapper;
 
-class ComponentsMapper extends BaseMapper
+class ComponentsMapper extends DoctrineMapper
 {
 
 }

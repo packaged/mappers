@@ -8,7 +8,7 @@ use Respect\Validation\Validator;
 /**
  * @Entity @Table(name="people")
  */
-class Person extends \Packaged\Mappers\BaseMapper
+class Person extends \Packaged\Mappers\DoctrineMapper
 {
   /**
    * @Id @Column(type="integer") @GeneratedValue

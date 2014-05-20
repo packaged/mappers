@@ -1,10 +1,10 @@
 <?php
-use Packaged\Mappers\BaseMapper;
+use Packaged\Mappers\DoctrineMapper;
 
 /**
  * @author  Richard.Gooding
  */
-class UnannotatedMapper extends BaseMapper
+class UnannotatedMapper extends DoctrineMapper
 {
   public $id;
   public $age;

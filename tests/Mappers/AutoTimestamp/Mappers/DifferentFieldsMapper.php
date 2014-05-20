@@ -3,7 +3,7 @@
 /**
  * @author  Richard.Gooding
  */
-class DifferentFieldsMapper extends \Packaged\Mappers\BaseMapper
+class DifferentFieldsMapper extends \Packaged\Mappers\DoctrineMapper
 {
   public $id;
   public $someData;

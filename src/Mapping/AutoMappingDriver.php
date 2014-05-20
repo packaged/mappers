@@ -64,10 +64,6 @@ class AutoMappingDriver extends StaticPHPDriver
           call_user_func($className . '::getAutoTimestamp')
         )
         {
-          var_dump($className);
-          var_dump(call_user_func(
-              $className . '::getCreatedAtColumn'
-            ));
           $metadata->mapField(
             [
               'fieldName'  => 'createdAt',
@@ -231,6 +227,6 @@ class AutoMappingDriver extends StaticPHPDriver
    */
   public function isTransient($className)
   {
-    return !is_subclass_of($className, 'Packaged\Mappers\BaseMapper');
+    return !is_subclass_of($className, 'Packaged\Mappers\DoctrineMapper');
   }
 }

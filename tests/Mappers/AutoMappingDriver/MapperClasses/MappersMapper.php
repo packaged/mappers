@@ -5,9 +5,9 @@
 
 namespace MappersTests\Mappers;
 
-use Packaged\Mappers\BaseMapper;
+use Packaged\Mappers\DoctrineMapper;
 
-class MappersMapper extends BaseMapper
+class MappersMapper extends DoctrineMapper
 {
   public $id;
   public $name;

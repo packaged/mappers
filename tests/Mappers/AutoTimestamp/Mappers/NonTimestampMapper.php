@@ -1,10 +1,10 @@
 <?php
-use Packaged\Mappers\BaseMapper;
+use Packaged\Mappers\DoctrineMapper;
 
 /**
  * @author  Richard.Gooding
  */
-class NonTimestampMapper extends BaseMapper
+class NonTimestampMapper extends DoctrineMapper
 {
   public $someData;
   public $id;

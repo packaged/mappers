@@ -1,11 +1,11 @@
 <?php
-use Packaged\Mappers\BaseMapper;
+use Packaged\Mappers\DoctrineMapper;
 
 /**
  * @author  Richard.Gooding
  */
 
-class NotNamespacedMapper extends BaseMapper
+class NotNamespacedMapper extends DoctrineMapper
 {
   public $id;
   public $age;
