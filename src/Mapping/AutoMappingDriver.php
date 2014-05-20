@@ -43,21 +43,11 @@ class AutoMappingDriver extends StaticPHPDriver
       $metadata->setPrimaryTable(['name' => $this->_getTableName($className)]);
     }
 
-    $seenCreatedAt     = false;
-    $seenUpdatedAt     = false;
     $needAutoGenerator = false;
 
     foreach($refClass->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop)
     {
       $propName = $prop->getName();
-      if($propName == 'createdAt')
-      {
-        $seenCreatedAt = true;
-      }
-      else if($propName == 'updatedAt')
-      {
-        $seenUpdatedAt = true;
-      }
 
       try
       {
@@ -68,7 +58,45 @@ class AutoMappingDriver extends StaticPHPDriver
         $mapping = null;
       }
 
-      if(!$mapping)
+      if($propName == 'createdAt')
+      {
+        if(!$this->isTransient($className) &&
+          call_user_func($className . '::getAutoTimestamp')
+        )
+        {
+          var_dump($className);
+          var_dump(call_user_func(
+              $className . '::getCreatedAtColumn'
+            ));
+          $metadata->mapField(
+            [
+              'fieldName'  => 'createdAt',
+              'columnName' => call_user_func(
+                $className . '::getCreatedAtColumn'
+              ),
+              'type'       => 'datetime',
+            ]
+          );
+        }
+      }
+      else if($propName == 'updatedAt')
+      {
+        if(!$this->isTransient($className) &&
+          call_user_func($className . '::getAutoTimestamp')
+        )
+        {
+          $metadata->mapField(
+            [
+              'fieldName'  => 'updatedAt',
+              'columnName' => call_user_func(
+                $className . '::getUpdatedAtColumn'
+              ),
+              'type'       => 'datetime',
+            ]
+          );
+        }
+      }
+      else if(!$mapping)
       {
         $columnName = Inflector::tableize($propName);
 
@@ -103,33 +131,6 @@ class AutoMappingDriver extends StaticPHPDriver
       $metadata->setIdGeneratorType(
         \Doctrine\ORM\Mapping\ClassMetadata::GENERATOR_TYPE_AUTO
       );
-    }
-
-    // Add auto timestamp fields if required
-    if((!$this->isTransient($className))
-      && call_user_func($className . '::getAutoTimestamp')
-    )
-    {
-      if(!$seenCreatedAt)
-      {
-        $metadata->mapField(
-          [
-            'fieldName'  => 'createdAt',
-            'columnName' => call_user_func($className . '::getCreatedAtColumn'),
-            'type'       => 'datetime',
-          ]
-        );
-      }
-      if(!$seenUpdatedAt)
-      {
-        $metadata->mapField(
-          [
-            'fieldName'  => 'updatedAt',
-            'columnName' => call_user_func($className . '::getUpdatedAtColumn'),
-            'type'       => 'datetime',
-          ]
-        );
-      }
     }
   }
 
