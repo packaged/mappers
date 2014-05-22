@@ -231,4 +231,29 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     );
     $person->validateField('testField');
   }
+
+  public function testIncrementDecrement()
+  {
+    $user              = new User();
+    $user->name        = 'test ' . rand();
+    $user->description = '';
+    $user->save();
+
+    $testUser = User::load($user->id());
+    $this->compareObjects($user, $testUser);
+
+    $user->increment('countField', 1);
+
+    $testUser = User::load($user->id());
+
+    $this->assertEquals(1, $user->countField);
+    $this->assertEquals($user->countField, $testUser->countField);
+
+    $user->decrement('countField', 50);
+    $this->assertEquals(-49, $user->countField);
+
+    $user->increment('countField', 100);
+    $user->reload();
+    $this->assertEquals(51, $user->countField);
+  }
 }

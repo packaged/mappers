@@ -9,7 +9,6 @@
 namespace Packaged\Mappers;
 
 use Packaged\Mappers\Exceptions\InvalidLoadException;
-use Respect\Validation\Validator;
 
 /**
  * Class BaseMapper
@@ -145,5 +144,29 @@ abstract class DoctrineMapper extends BaseMapper
   public function isCompositeId()
   {
     return count($this->id()) > 1;
+  }
+
+  public function increment($field, $count)
+  {
+    $em    = static::getEntityManager();
+    $query = $em->createQuery(
+      'UPDATE ' . get_class($this)
+      . ' a SET a.' . $field . ' = a.' . $field . ' + :count'
+    );
+    $query->execute(['count' => $count]);
+    $this->$field += $count;
+    $em->persist($this);
+  }
+
+  public function decrement($field, $count)
+  {
+    $em    = static::getEntityManager();
+    $query = $em->createQuery(
+      'UPDATE ' . get_class($this)
+      . ' a SET a.' . $field . ' = a.' . $field . ' - :count'
+    );
+    $query->execute(['count' => $count]);
+    $this->$field -= $count;
+    $em->persist($this);
   }
 }

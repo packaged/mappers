@@ -19,4 +19,9 @@ class User extends \Packaged\Mappers\DoctrineMapper
    * @Column(type="string")
    **/
   public $description;
+
+  /**
+   * @Column(type="integer")
+   */
+  public $countField = 0;
 }

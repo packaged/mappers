@@ -40,4 +40,8 @@ interface IMapper
   public function delete();
 
   public function id();
+
+  public function increment($field, $count);
+
+  public function decrement($field, $count);
 }
