@@ -164,24 +164,40 @@ abstract class DoctrineMapper extends BaseMapper
 
   public function increment($field, $count)
   {
-    $em    = static::getEntityManager();
-    $query = $em->createQuery(
+    $em       = static::getEntityManager();
+    $keys     = $this->_getKeyValues();
+    $keyArray = [];
+    foreach($keys as $k => $v)
+    {
+      $keyArray[] = 'a.' . $k . ' = :' . $k;
+    }
+    $query         = $em->createQuery(
       'UPDATE ' . get_class($this)
-      . ' a SET a.' . $field . ' = a.' . $field . ' + :count'
+      . ' a SET a.' . $field . ' = a.' . $field . ' + :count WHERE '
+      . implode(' AND ', $keyArray)
     );
-    $query->execute(['count' => $count]);
+    $keys['count'] = $count;
+    $query->execute($keys);
     $this->$field += $count;
     $em->persist($this);
   }
 
   public function decrement($field, $count)
   {
-    $em    = static::getEntityManager();
-    $query = $em->createQuery(
+    $em       = static::getEntityManager();
+    $keys     = $this->_getKeyValues();
+    $keyArray = [];
+    foreach($keys as $k => $v)
+    {
+      $keyArray[] = 'a.' . $k . ' = :' . $k;
+    }
+    $query         = $em->createQuery(
       'UPDATE ' . get_class($this)
-      . ' a SET a.' . $field . ' = a.' . $field . ' - :count'
+      . ' a SET a.' . $field . ' = a.' . $field . ' - :count WHERE '
+      . implode(' AND ', $keyArray)
     );
-    $query->execute(['count' => $count]);
+    $keys['count'] = $count;
+    $query->execute($keys);
     $this->$field -= $count;
     $em->persist($this);
   }
