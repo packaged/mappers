@@ -73,6 +73,11 @@ abstract class DoctrineMapper extends BaseMapper
     static::load($id);
   }
 
+  final public static function getTableName()
+  {
+    return static::_getMetadata()->getTableName();
+  }
+
   public function save()
   {
     $em = static::getEntityManager();
@@ -82,10 +87,11 @@ abstract class DoctrineMapper extends BaseMapper
   }
 
   /**
+   * @param $newKey
+   *
    * @return static
-   * @throws \Doctrine\ORM\Mapping\MappingException
    */
-  public function saveAsNew()
+  public function saveAsNew($newKey = null)
   {
     // timestamps
     $new = new static();
@@ -97,7 +103,7 @@ abstract class DoctrineMapper extends BaseMapper
     if(!$this->isCompositeId())
     {
       $keys = $this->_getKeys();
-      $new->hydrate([reset($keys) => null]);
+      $new->hydrate([reset($keys) => $newKey]);
     }
     $new->save();
     return $new;
@@ -133,19 +139,19 @@ abstract class DoctrineMapper extends BaseMapper
     return $vals;
   }
 
-  protected function _getMetadata()
+  protected static function _getMetadata()
   {
-    return static::getEntityManager()->getClassMetadata(get_class($this));
+    return static::getEntityManager()->getClassMetadata(get_called_class());
   }
 
   protected function _getKeys()
   {
-    return $this->_getMetadata()->getIdentifierColumnNames();
+    return static::_getMetadata()->getIdentifierColumnNames();
   }
 
   protected function _getKeyValues()
   {
-    return $this->_getMetadata()->getIdentifierValues($this);
+    return static::_getMetadata()->getIdentifierValues($this);
   }
 
   /**

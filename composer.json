@@ -13,10 +13,11 @@
     }
   ],
   "require":           {
-    "php":                ">=5.4.0",
-    "doctrine/orm":       "2.5.*@dev",
-    "phpunit/phpunit":    "4.*",
-    "respect/validation": "dev-master"
+    "php":                      ">=5.4.0",
+    "doctrine/orm":             "2.5.*@dev",
+    "phpunit/phpunit":          "4.*",
+    "respect/validation":       "dev-master",
+    "packaged/cassandrathrift": "dev-master"
   },
   "autoload":          {
     "psr-4": {

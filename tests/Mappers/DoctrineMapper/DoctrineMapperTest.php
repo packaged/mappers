@@ -10,7 +10,7 @@ use Packaged\Mappers\Mapping\ChainedDriver;
  * Date: 15/04/2014
  * Time: 14:44
  */
-class BaseMapperTest extends PHPUnit_Framework_TestCase
+class DoctrineMapperTest extends PHPUnit_Framework_TestCase
 {
   public function setUp()
   {

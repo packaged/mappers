@@ -33,7 +33,7 @@ interface IMapper
 
   public function save();
 
-  public function saveAsNew();
+  public function saveAsNew($newKey = null);
 
   public function reload();
 
@@ -44,4 +44,6 @@ interface IMapper
   public function increment($field, $count);
 
   public function decrement($field, $count);
+
+  public static function getTableName();
 }
