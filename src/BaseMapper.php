@@ -31,7 +31,7 @@ abstract class BaseMapper implements IMapper
 
   protected $_validationErrors = [];
 
-  public static function getService()
+  public static function getServiceName()
   {
     return 'db';
   }
