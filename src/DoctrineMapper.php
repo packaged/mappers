@@ -19,6 +19,16 @@ use Packaged\Mappers\Exceptions\InvalidLoadException;
 abstract class DoctrineMapper extends BaseMapper
 {
   /**
+   * @return \Doctrine\ORM\EntityManager
+   */
+  public static function getEntityManager()
+  {
+    return static::getConnectionResolver()->getConnection(
+      static::getServiceName()
+    );
+  }
+
+  /**
    * @param mixed $id
    *
    * @return static

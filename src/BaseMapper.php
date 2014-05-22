@@ -169,14 +169,6 @@ abstract class BaseMapper implements IMapper
     return static::$_resolver;
   }
 
-  /**
-   * @return \Doctrine\ORM\EntityManager
-   */
-  public static function getEntityManager()
-  {
-    return static::getConnectionResolver()->getConnection(static::getService());
-  }
-
   public function hydrate(array $values)
   {
     foreach($values as $key => $value)

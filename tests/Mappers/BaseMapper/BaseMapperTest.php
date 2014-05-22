@@ -57,7 +57,7 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     $resolver->addConnection('db', $db);
     $resolver->addConnection('sqlite', $sqlite);
 
-    \Packaged\Mappers\DoctrineMapper::setConnectionResolver($resolver);
+    \Packaged\Mappers\BaseMapper::setConnectionResolver($resolver);
 
     $tool    = new \Doctrine\ORM\Tools\SchemaTool($db);
     $classes = [$db->getClassMetadata('User'), $db->getClassMetadata('Person')];
@@ -76,7 +76,7 @@ class BaseMapperTest extends PHPUnit_Framework_TestCase
     $connectionName, $expectedClass, $expectedException
   )
   {
-    $resolver = \Packaged\Mappers\DoctrineMapper::getConnectionResolver();
+    $resolver = \Packaged\Mappers\BaseMapper::getConnectionResolver();
     $this->setExpectedException($expectedException);
     $this->assertInstanceOf(
       $expectedClass,
