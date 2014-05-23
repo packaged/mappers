@@ -12,7 +12,7 @@ use Packaged\Mappers\Mapping\ChainedDriver;
  */
 class DoctrineMapperTest extends PHPUnit_Framework_TestCase
 {
-  public function setUp()
+  public static function setUpBeforeClass()
   {
     require_once __DIR__ . '/User.php';
     require_once __DIR__ . '/Person.php';
@@ -136,7 +136,7 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
 
     $user              = new User();
     $user->name        = 'name' . rand() . time();
-    $user->description = 'desc' . rand() . time();
+    $user->description = 'usertesting';
     $user->save();
     $this->assertTrue($user->exists());
 
@@ -151,7 +151,7 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
     $newUser = $user->saveAsNew();
     $user->getEntityManager()->detach($user);
     $newUser->getEntityManager()->detach($newUser);
-    $this->compareObjects(User::loadWhere([]), [$user, $newUser]);
+    $this->compareObjects(User::loadWhere(['description'=>'usertesting']), [$user, $newUser]);
 
     $user->name = 'name' . rand() . time();
     $user->save();

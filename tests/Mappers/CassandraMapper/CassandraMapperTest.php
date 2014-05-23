@@ -8,12 +8,22 @@
  */
 class CassandraMapperTest extends PHPUnit_Framework_TestCase
 {
-  public function setUp()
+  public static function setUpBeforeClass()
   {
     require_once __DIR__ . '/User.php';
     require_once __DIR__ . '/Person.php';
 
     $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
+    $cassDb->prepare(
+      'SELECT * FROM system.schema_keyspaces where keyspace_name = \'Cubex\''
+    );
+    if(!$cassDb->execute([]))
+    {
+      $cassDb->prepare(
+        'CREATE KEYSPACE Cubex WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':3};'
+      );
+      var_dump($cassDb->execute([]));
+    }
     $cassDb->setKeyspace('Cubex');
 
     $resolver = new \Packaged\Mappers\ConnectionResolver();
