@@ -12,10 +12,8 @@ class CassUser extends \Packaged\Mappers\CassandraMapper
     return 'id';
   }
 
-
   public static function getTableName()
   {
     return 'cass_users';
   }
-
 }

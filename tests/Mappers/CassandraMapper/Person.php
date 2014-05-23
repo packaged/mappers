@@ -1,7 +1,7 @@
 <?php
 use Respect\Validation\Validator;
 
-class CassPerson extends \Packaged\Mappers\DoctrineMapper
+class CassPerson extends \Packaged\Mappers\CassandraMapper
 {
   public $id;
   public $name;
@@ -17,5 +17,10 @@ class CassPerson extends \Packaged\Mappers\DoctrineMapper
   public function keyField()
   {
     return 'id';
+  }
+
+  public static function getTableName()
+  {
+    return 'cass_users';
   }
 }
