@@ -17,7 +17,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $cassDb->prepare('SELECT * FROM system.schema_keyspaces where keyspace_name = \'Cubex\'');
     if(!$cassDb->execute([]))
     {
-      $cassDb->prepare('CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':3};');
+      $cassDb->prepare('CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':1};');
       $cassDb->execute([]);
     }
     $cassDb->setKeyspace('Cubex');
