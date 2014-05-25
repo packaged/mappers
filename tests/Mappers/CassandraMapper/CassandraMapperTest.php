@@ -20,9 +20,9 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     if(!$cassDb->execute([]))
     {
       $cassDb->prepare(
-        'CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':3};'
+        'CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':3}; CREATE TABLE "Cubex"."cass_users" (key blob, column1 ascii, value blob, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;'
       );
-      var_dump($cassDb->execute([]));
+      $cassDb->execute([]);
     }
     $cassDb->setKeyspace('Cubex');
 
