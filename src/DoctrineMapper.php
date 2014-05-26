@@ -8,6 +8,7 @@
 
 namespace Packaged\Mappers;
 
+use Doctrine\ORM\Tools\SchemaTool;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 
 /**
@@ -200,5 +201,14 @@ abstract class DoctrineMapper extends BaseMapper
     $query->execute($keys);
     $this->$field -= $count;
     $em->persist($this);
+  }
+
+  public static function createTable()
+  {
+    $em = static::getEntityManager();
+    $tool    = new SchemaTool($em);
+    $classes = [$em->getClassMetadata(get_called_class())];
+    $tool->dropSchema($classes);
+    $tool->createSchema($classes);
   }
 }

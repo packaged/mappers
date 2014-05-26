@@ -114,11 +114,11 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
     ksort($expectedFieldMappings);
     ksort($actualFieldMappings);
 
-    echo "\n-------------------------------------\n" . $className . "\n";
+    /*echo "\n-------------------------------------\n" . $className . "\n";
     echo "EXPECTED:\n";
     print_r($expectedFieldMappings);
     echo "ACTUAL:\n";
-    print_r($actualFieldMappings);
+    print_r($actualFieldMappings);*/
 
     $this->assertEquals($expectedFieldMappings, $actualFieldMappings);
   }

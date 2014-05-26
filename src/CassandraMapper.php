@@ -14,6 +14,10 @@ use Packaged\Mappers\Exceptions\MapperException;
 
 abstract class CassandraMapper extends BaseMapper
 {
+  public static function UseCompactStorage()
+  {
+    return true;
+  }
 
   public static function getServiceName()
   {
@@ -55,22 +59,18 @@ abstract class CassandraMapper extends BaseMapper
       'SELECT * FROM ' . static::getTableName() . ' WHERE KEY = ?',
       [$id]
     );
-    $data   = [];
-    foreach($result as $row)
+
+    if(static::UseCompactStorage())
     {
-      if(isset($row['key'])
-        && isset($row['column1'])
-        && isset($row['value'])
-      )
-      { // for dynamic tables, column# => value
+      $data = [];
+      foreach ($result as $row)
+      {
+        // for dynamic tables, column# => value
         $data[$row['column1']] = $row['value'];
       }
-      else
-      {
-        $data = $row;
-      }
+      return $data;
     }
-    return $data;
+    return $result;
   }
 
   /**
@@ -148,32 +148,36 @@ abstract class CassandraMapper extends BaseMapper
     $changes = call_user_func('get_object_vars', $this);
     unset($changes[$this->keyField()]);
 
-    /* Column Family Format */
-    $key   = $this->id();
-    $query = 'BEGIN BATCH' . "\n";
-    $args  = [];
-    foreach($changes as $k => $v)
+    if (static::UseCompactStorage())
     {
-      $query .= 'INSERT INTO ' . static::getTableName()
-        . ' (key,column1,value) VALUES (?,?,?)' . "\n";
-      $args[] = $key;
-      $args[] = $k;
-      $args[] = $v;
+      /* Column Family Format */
+      $key   = $this->id();
+      $query = 'BEGIN BATCH' . "\n";
+      $args  = [];
+      foreach($changes as $k => $v)
+      {
+        $query .= 'INSERT INTO ' . static::getTableName()
+          . ' (key,column1,value) VALUES (?,?,?)' . "\n";
+        $args[] = $key;
+        $args[] = $k;
+        $args[] = $v;
+      }
+      $query .= 'APPLY BATCH;';
+      $return = static::execute($query, $args);
     }
-    $query .= 'APPLY BATCH;';
-
-    $return = static::execute($query, $args);
+    else
+    {
+      /* CQL3 Format */
+      $query = sprintf(
+        "INSERT INTO %s (%s) VALUES(%s)",
+        static::getTableName(),
+        implode(', ', array_keys($changes)),
+        implode(',', array_fill(0, count($changes), '?'))
+      );
+      $return = static::execute($query,$changes);
+    }
     $this->setExists(true);
     return $return;
-    /* CQL3 Format */
-    /*$query = sprintf(
-      "INSERT INTO %s (%s) VALUES(%s)",
-      static::getTableName(),
-      implode(', ', array_keys($changes)),
-      implode(',', array_fill(0, count($changes), '?'))
-    );
-    $stmt = $conn->prepare($query);
-    return $stmt->execute($changes);*/
   }
 
   public function saveAsNew($newKey = null)
@@ -255,5 +259,20 @@ abstract class CassandraMapper extends BaseMapper
     return static::getConnectionResolver()->getConnection(
       static::getServiceName()
     );
+  }
+
+  public static function createTable()
+  {
+    $conn = static::getConnection();
+
+    $conn->prepare('SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'Cubex\' AND columnfamily_name = \'cass_users\';');
+    if(!$conn->execute([]))
+    {
+      if (static::UseCompactStorage())
+      {
+        $conn->prepare('CREATE TABLE IF NOT EXISTS "Cubex"."cass_users" (key blob, column1 ascii, value blob, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;');
+        $conn->execute([]);
+      }
+    }
   }
 }

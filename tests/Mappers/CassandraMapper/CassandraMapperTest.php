@@ -21,17 +21,14 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
       $cassDb->execute([]);
     }
     $cassDb->setKeyspace('Cubex');
-    $cassDb->prepare('SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'Cubex\' AND columnfamily_name = \'cass_users\';');
-    if(!$cassDb->execute([]))
-    {
-      $cassDb->prepare('CREATE TABLE IF NOT EXISTS "Cubex"."cass_users" (key blob, column1 ascii, value blob, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;');
-      $cassDb->execute([]);
-    }
 
     $resolver = new \Packaged\Mappers\ConnectionResolver();
     $resolver->addConnection('cassdb', $cassDb);
 
     \Packaged\Mappers\BaseMapper::setConnectionResolver($resolver);
+
+    CassUser::createTable();
+    CassPerson::createTable();
   }
 
   /**
@@ -72,6 +69,8 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $id = $user->id();
     $this->assertNotEmpty($id);
 
+    print_r($user);
+    print_r(CassUser::load($id));
     $this->compareObjectsSimilar($user, CassUser::load($id));
     $user->name        = rand();
     $user->description = rand();

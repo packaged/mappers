@@ -59,10 +59,8 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
 
     \Packaged\Mappers\BaseMapper::setConnectionResolver($resolver);
 
-    $tool    = new \Doctrine\ORM\Tools\SchemaTool($db);
-    $classes = [$db->getClassMetadata('User'), $db->getClassMetadata('Person')];
-    $tool->dropSchema($classes);
-    $tool->createSchema($classes);
+    User::createTable();
+    Person::createTable();
   }
 
   /**

@@ -46,4 +46,6 @@ interface IMapper
   public function decrement($field, $count);
 
   public static function getTableName();
+
+  public static function createTable();
 }
