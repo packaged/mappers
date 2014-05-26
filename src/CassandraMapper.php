@@ -217,25 +217,12 @@ abstract class CassandraMapper extends BaseMapper
 
   public function increment($field, $count)
   {
-    throw new MapperException('increment not supported');
-    /*self::execute(
-      'UPDATE ' . static::getTableName() . ' SET "'
-      . $field . '" = "' . $field . '" + ? WHERE KEY = ?',
-      [$count, $this->id()]
-    );
-    $this->$field += $count;*/
+    throw new MapperException('Increment only supported in CounterCassandraMapper');
   }
 
   public function decrement($field, $count)
   {
-    throw new MapperException('decrement not supported');
-    /*self::execute(
-      'UPDATE ' . static::getTableName() . ' SET "'
-      . $field . '" = "' . $field . '" - ? WHERE KEY = ?'
-      ,
-      [$count, $this->id()]
-    );
-    $this->$field -= $count;*/
+    throw new MapperException('Deccrement only supported in CounterCassandraMapper');
   }
 
   public static function getTableName()
@@ -268,7 +255,7 @@ abstract class CassandraMapper extends BaseMapper
     $conn->prepare('SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'Cubex\' AND columnfamily_name = \'cass_users\';');
     if(!$conn->execute([]))
     {
-      if (static::UseCompactStorage())
+      if(static::UseCompactStorage())
       {
         $conn->prepare('CREATE TABLE IF NOT EXISTS "Cubex"."cass_users" (key blob, column1 ascii, value blob, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;');
         $conn->execute([]);
