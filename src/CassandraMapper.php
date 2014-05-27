@@ -14,11 +14,6 @@ use Packaged\Mappers\Exceptions\MapperException;
 
 abstract class CassandraMapper extends BaseMapper
 {
-  public static function UseCompactStorage()
-  {
-    return true;
-  }
-
   public static function getServiceName()
   {
     return 'cassdb';
@@ -42,42 +37,37 @@ abstract class CassandraMapper extends BaseMapper
     else
     {
       $data   = self::getData($id);
-      $return = new static();
+      $mapper = new static();
       if($data)
       {
-        $data[$return->keyField()] = $id;
-        $return->hydrate($data);
-        $return->setExists(true);
+        $mapper->hydrate($data);
+        $mapper->setExists(true);
       }
-      return $return;
+      return $mapper;
     }
   }
 
   public static function getData($id)
   {
-    $result = self::execute(
-      'SELECT * FROM ' . static::getTableName() . ' WHERE KEY = ?',
-      [$id]
-    );
-
-    if(static::UseCompactStorage())
+    $keys = [];
+    foreach(self::_getKeys() as $k)
     {
-      $data = [];
-      foreach ($result as $row)
-      {
-        // for dynamic tables, column# => value
-        $data[$row['column1']] = $row['value'];
-      }
-      return $data;
+      $keys[] = $k . ' = ?';
     }
-    return $result;
+
+    $result = self::execute(
+      'SELECT * FROM ' . static::getTableName()
+      . ' WHERE ' . implode(' AND ', $keys),
+      (array)$id
+    );
+    return reset($result);
   }
 
   /**
    * @param $query
    * @param $parameters
    *
-   * @return \PDOStatement
+   * @return array
    * @throws \Exception
    */
   public static function execute($query, array $parameters = [])
@@ -145,12 +135,16 @@ abstract class CassandraMapper extends BaseMapper
   {
     $this->validate();
 
-    $changes = call_user_func('get_object_vars', $this);
-    unset($changes[$this->keyField()]);
-
-    if (static::UseCompactStorage())
+    $changes  = [];
+    $mappings = static::_getMetadata()->fieldMappings;
+    foreach($mappings as $map)
     {
-      /* Column Family Format */
+      $changes[$map['columnName']] = $this->$map['fieldName'];
+    }
+
+    /*if(static::UseWideRows())
+    {
+      // Column Family
       $key   = $this->id();
       $query = 'BEGIN BATCH' . "\n";
       $args  = [];
@@ -164,18 +158,17 @@ abstract class CassandraMapper extends BaseMapper
       }
       $query .= 'APPLY BATCH;';
       $return = static::execute($query, $args);
-    }
-    else
-    {
-      /* CQL3 Format */
-      $query = sprintf(
-        "INSERT INTO %s (%s) VALUES(%s)",
-        static::getTableName(),
-        implode(', ', array_keys($changes)),
-        implode(',', array_fill(0, count($changes), '?'))
-      );
-      $return = static::execute($query,$changes);
-    }
+    }*/
+    // CQL Table
+    $query  = sprintf(
+      "INSERT INTO %s (%s) VALUES (%s)",
+      static::getTableName(),
+      implode(', ', array_keys($changes)),
+      implode(',', array_fill(0, count($changes), '?'))
+    );
+    var_dump($query);
+    var_dump($changes);
+    $return = static::execute($query, $changes);
     $this->setExists(true);
     return $return;
   }
@@ -187,8 +180,7 @@ abstract class CassandraMapper extends BaseMapper
     {
       $return->$k = $v;
     }
-    $keyField          = $this->keyField();
-    $return->$keyField = $newKey;
+    $return->setId($newKey);
     $return->save();
     return $return;
   }
@@ -201,41 +193,44 @@ abstract class CassandraMapper extends BaseMapper
 
   public function delete()
   {
+    $keys = [];
+    foreach(self::_getKeys() as $k)
+    {
+      $keys[] = $k . ' = ?';
+    }
     self::execute(
       'DELETE FROM ' . static::getTableName()
-      . ' WHERE KEY = ?',
-      [$this->id()]
+      . ' WHERE ' . implode(' AND ', $keys),
+      (array)$this->id()
     );
     $this->setExists(false);
   }
 
   public function id()
   {
-    $keyField = $this->keyField();
-    return $this->$keyField;
+    return $this->_getKeyValues();
+  }
+
+  public function setId($value)
+  {
+    foreach(array_combine(static::_getKeys(), (array)$value) as $k => $v)
+    {
+      $this->$k = $v;
+    }
   }
 
   public function increment($field, $count)
   {
-    throw new MapperException('Increment only supported in CounterCassandraMapper');
+    throw new MapperException(
+      'Increment only supported in CounterCassandraMapper'
+    );
   }
 
   public function decrement($field, $count)
   {
-    throw new MapperException('Deccrement only supported in CounterCassandraMapper');
-  }
-
-  public static function getTableName()
-  {
-    return strtolower(basename(get_called_class()));
-  }
-
-  abstract public function keyField();
-
-  public function setId($value)
-  {
-    $keyField        = $this->keyField();
-    $this->$keyField = $value;
+    throw new MapperException(
+      'Deccrement only supported in CounterCassandraMapper'
+    );
   }
 
   /**
@@ -250,16 +245,57 @@ abstract class CassandraMapper extends BaseMapper
 
   public static function createTable()
   {
-    $conn = static::getConnection();
-
-    $conn->prepare('SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'Cubex\' AND columnfamily_name = \'cass_users\';');
-    if(!$conn->execute([]))
+    $table = static::getTableName();
+    if(!static::execute(
+      'SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'Cubex\' AND columnfamily_name = \'' . $table . '\';'
+    )
+    )
     {
-      if(static::UseCompactStorage())
+      /*if(static::UseWideRows())
       {
-        $conn->prepare('CREATE TABLE IF NOT EXISTS "Cubex"."cass_users" (key blob, column1 ascii, value blob, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;');
+        $conn->prepare(
+          'CREATE TABLE IF NOT EXISTS "Cubex"."cass_users" (key blob, column1 ascii, value blob, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;'
+        );
         $conn->execute([]);
+      }*/
+      $md      = self::_getMetadata();
+      $columns = [];
+      foreach($md->fieldMappings as $map)
+      {
+        $columns[] = $map['columnName'] . ' ' . self::getCqlType($map['type']);
       }
+      $query = 'CREATE TABLE "' . $table . '" ('
+        . implode(',', $columns)
+        . ', PRIMARY KEY (' . implode(',', $md->identifier) . '))';
+      self::execute($query);
     }
+  }
+
+  private static $cqlTypes = [
+    'ascii'     => 'string',
+    'bigint'    => 'bigint',
+    'blob'      => 'blob',
+    'boolean'   => 'boolean',
+    'decimal'   => 'float',
+    'double'    => 'float',
+    'float'     => 'float',
+    'inet'      => 'string',
+    'int'       => 'integer',
+    'set'       => 'simple_array',
+    'text'      => 'string',
+    'timestamp' => 'time',
+    'uuid'      => 'uuid',
+    'varchar'   => 'string',
+    'varint'    => 'integer',
+    'counter'   => 'integer',
+  ];
+
+  private static function getCqlType($type)
+  {
+    if(isset(self::$cqlTypes[$type]))
+    {
+      return self::$cqlTypes[$type];
+    }
+    return array_search($type, self::$cqlTypes);
   }
 }

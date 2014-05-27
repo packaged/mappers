@@ -13,7 +13,7 @@ class AutoMappingDriverTest extends PHPUnit_Framework_TestCase
 
   public function testAllClassNames()
   {
-    $driver = new AutoMappingDriver(__DIR__ . '/MapperClasses');
+    $driver = new AutoMappingDriver('integer', __DIR__ . '/MapperClasses');
 
     $expected = [
       'MappersTests\Applications\MyApp\ApplicationMapper',

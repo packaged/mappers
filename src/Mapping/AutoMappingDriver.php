@@ -12,8 +12,10 @@ use Doctrine\ORM\Mapping\MappingException;
 
 class AutoMappingDriver extends StaticPHPDriver
 {
-  public function __construct($paths = null)
+  protected $_idType;
+  public function __construct($idType = 'integer', $paths = null)
   {
+    $this->_idType = $idType;
     if(!$paths)
     {
       $paths = [];
@@ -196,7 +198,7 @@ class AutoMappingDriver extends StaticPHPDriver
       switch($lastPart)
       {
         case 'id':
-          $type = 'integer';
+          $type = $this->_idType;
           break;
         case 'at':
         case 'time':

@@ -12,13 +12,10 @@ abstract class CounterCassandraMapper extends CassandraMapper
 {
   public static function createTable()
   {
-    if(static::UseCompactStorage())
+    /*if(static::UseWideRows())
     {
       static::execute('CREATE TABLE IF NOT EXISTS "Cubex"."cass_users" (key blob, column1 ascii, value counter, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;');
-    }
-    else
-    {
-    }
+    }*/
   }
 
   public function increment($field, $count)

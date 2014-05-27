@@ -8,7 +8,11 @@
 
 namespace Packaged\Mappers;
 
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
+use Packaged\Mappers\Mapping\AutoMappingDriver;
+use Packaged\Mappers\Mapping\ChainedDriver;
 use Respect\Validation\Validator;
 
 abstract class BaseMapper implements IMapper
@@ -111,6 +115,75 @@ abstract class BaseMapper implements IMapper
     return $allOk;
   }
 
+  final public static function getTableName()
+  {
+    return static::_getMetadata()->getTableName();
+  }
+
+  private static $classMetadata = [];
+  private static $columnMap = [];
+
+  /**
+   * @return ClassMetadata
+   * @throws \Exception
+   */
+  protected static function _getMetadata()
+  {
+    $className = get_called_class();
+    if(!isset(self::$classMetadata[$className]))
+    {
+      self::$classMetadata[$className] = new ClassMetadata($className);
+      $driver                          = new ChainedDriver(
+        [
+          (new Configuration())->newDefaultAnnotationDriver(),
+          new AutoMappingDriver('string')
+        ]
+      );
+      $driver->loadMetadataForClass(
+        $className,
+        self::$classMetadata[$className]
+      );
+    }
+    return self::$classMetadata[$className];
+  }
+
+  protected static function _getColumnMap()
+  {
+    $className = get_called_class();
+    if(!isset(self::$columnMap[$className]))
+    {
+      self::$columnMap[$className] = array_flip(
+        static::_getMetadata()->columnNames
+      );
+    }
+    return self::$columnMap[$className];
+  }
+
+  public function id()
+  {
+    $vals = $this->_getKeyValues();
+    if(is_array($vals) && count($vals) === 1)
+    {
+      return reset($vals);
+    }
+    return $vals;
+  }
+
+  protected static function _getKeys()
+  {
+    return static::_getMetadata()->getIdentifierColumnNames();
+  }
+
+  protected function _getKeyValues()
+  {
+    $values = [];
+    foreach(static::_getKeys() as $key)
+    {
+      $values[$key] = $this->$key;
+    }
+    return $values;
+  }
+
   public function validateField($fieldName, $throwExceptions = true)
   {
     $result = true;
@@ -171,10 +244,12 @@ abstract class BaseMapper implements IMapper
 
   public function hydrate(array $values)
   {
+    $map = static::_getColumnMap();
     foreach($values as $key => $value)
     {
-      $this->$key = $value;
+      $this->$map[$key] = $value;
     }
+    return $this;
   }
 
   public function setExists($bool = true)

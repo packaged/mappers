@@ -74,11 +74,6 @@ abstract class DoctrineMapper extends BaseMapper
     static::load($id);
   }
 
-  final public static function getTableName()
-  {
-    return static::_getMetadata()->getTableName();
-  }
-
   public function save()
   {
     $em = static::getEntityManager();
@@ -130,29 +125,9 @@ abstract class DoctrineMapper extends BaseMapper
     static::getEntityManager()->flush($this);
   }
 
-  public function id()
-  {
-    $vals = $this->_getKeyValues();
-    if(is_array($vals) && count($vals) === 1)
-    {
-      return reset($vals);
-    }
-    return $vals;
-  }
-
   protected static function _getMetadata()
   {
     return static::getEntityManager()->getClassMetadata(get_called_class());
-  }
-
-  protected function _getKeys()
-  {
-    return static::_getMetadata()->getIdentifierColumnNames();
-  }
-
-  protected function _getKeyValues()
-  {
-    return static::_getMetadata()->getIdentifierValues($this);
   }
 
   /**
