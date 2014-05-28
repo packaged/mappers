@@ -75,8 +75,6 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $id = $user->id();
     $this->assertNotEmpty($id);
 
-    print_r($user);
-    print_r(CassUser::load($id));
     $this->compareObjectsSimilar($user, CassUser::load($id));
     $user->name        = rand();
     $user->description = rand();
@@ -248,7 +246,9 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $this->assertEquals(-49, $user->testCounter);
 
     $user->increment('testCounter', 100);
+    $user->increment('maxCounterTest', PHP_INT_MAX);
     $user->reload();
     $this->assertEquals(51, $user->testCounter);
+    $this->assertEquals(PHP_INT_MAX, $user->maxCounterTest);
   }
 }

@@ -10,4 +10,5 @@ class CounterTest extends \Packaged\Mappers\CounterCassandraMapper
 {
   public $id;
   public $testCounter;
+  public $maxCounterTest;
 } 

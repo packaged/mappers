@@ -23,7 +23,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
   {
     foreach(static::_getMetadata()->fieldMappings as $map)
     {
-      if(!isset($map['id']) || !$map['id'])
+      if((!isset($map['id']) || !$map['id']) && $values[$map['columnName']])
       {
         $values[$map['columnName']] = self::unpack($values[$map['columnName']]);
       }
