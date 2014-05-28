@@ -52,7 +52,7 @@ abstract class CassandraMapper extends BaseMapper
     $keys = [];
     foreach(self::_getKeys() as $k)
     {
-      $keys[] = $k . ' = ?';
+      $keys[] = '"'.$k . '" = ?';
     }
 
     $result = self::execute(
@@ -136,10 +136,10 @@ abstract class CassandraMapper extends BaseMapper
     $this->validate();
 
     $changes  = [];
-    $mappings = static::_getMetadata()->fieldMappings;
-    foreach($mappings as $map)
+    $mappings = static::_getColumnMap();
+    foreach($mappings as $column => $field)
     {
-      $changes[$map['columnName']] = $this->$map['fieldName'];
+      $changes[$column] = $this->$field;
     }
 
     /*if(static::UseWideRows())
@@ -166,8 +166,6 @@ abstract class CassandraMapper extends BaseMapper
       implode(', ', array_keys($changes)),
       implode(',', array_fill(0, count($changes), '?'))
     );
-    var_dump($query);
-    var_dump($changes);
     $return = static::execute($query, $changes);
     $this->setExists(true);
     return $return;
@@ -196,7 +194,7 @@ abstract class CassandraMapper extends BaseMapper
     $keys = [];
     foreach(self::_getKeys() as $k)
     {
-      $keys[] = $k . ' = ?';
+      $keys[] = '"'.$k . '" = ?';
     }
     self::execute(
       'DELETE FROM ' . static::getTableName()
@@ -262,7 +260,7 @@ abstract class CassandraMapper extends BaseMapper
       $columns = [];
       foreach($md->fieldMappings as $map)
       {
-        $columns[] = $map['columnName'] . ' ' . self::getCqlType($map['type']);
+        $columns[] = static::_getCqlField($map);
       }
       $query = 'CREATE TABLE "' . $table . '" ('
         . implode(',', $columns)
@@ -290,12 +288,16 @@ abstract class CassandraMapper extends BaseMapper
     'counter'   => 'integer',
   ];
 
-  private static function getCqlType($type)
+  protected static function _getCqlField($map)
   {
-    if(isset(self::$cqlTypes[$type]))
+    if(isset(self::$cqlTypes[$map['type']]))
     {
-      return self::$cqlTypes[$type];
+      $type = self::$cqlTypes[$map['type']];
     }
-    return array_search($type, self::$cqlTypes);
+    else
+    {
+      $type = array_search($map['type'], self::$cqlTypes);
+    }
+    return '"' . $map['columnName'] . '" ' . $type;
   }
 }

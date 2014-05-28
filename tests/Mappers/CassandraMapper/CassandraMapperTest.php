@@ -12,12 +12,17 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
   {
     require_once __DIR__ . '/User.php';
     require_once __DIR__ . '/Person.php';
+    require_once __DIR__ . '/CounterTest.php';
 
     $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
-    $cassDb->prepare('SELECT * FROM system.schema_keyspaces where keyspace_name = \'Cubex\'');
+    $cassDb->prepare(
+      'SELECT * FROM system.schema_keyspaces where keyspace_name = \'Cubex\''
+    );
     if(!$cassDb->execute([]))
     {
-      $cassDb->prepare('CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':1};');
+      $cassDb->prepare(
+        'CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':1};'
+      );
       $cassDb->execute([]);
     }
     $cassDb->setKeyspace('Cubex');
@@ -29,6 +34,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
 
     CassUser::createTable();
     CassPerson::createTable();
+    CounterTest::createTable();
   }
 
   /**
@@ -227,29 +233,22 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     );
     $person->validateField('testField');
   }
-  /*public function testIncrementDecrement()
+
+  public function testIncrementDecrement()
   {
-    $user              = new CassUser();
-    $user->id          = uniqid('testing');
-    $user->name        = 'test ' . rand();
-    $user->description = '';
-    $user->save();
+    $user     = new CounterTest();
+    $user->id = uniqid('testing');
 
-    $testUser = CassUser::load($user->id());
-    $this->compareObjects($user, $testUser);
+    $user->increment('testCounter', 1);
+    $testUser = CounterTest::load($user->id());
+    $this->assertEquals(1, $user->testCounter);
+    $this->assertEquals($user->testCounter, $testUser->testCounter);
 
-    $user->increment('countField', 1);
+    $user->decrement('testCounter', 50);
+    $this->assertEquals(-49, $user->testCounter);
 
-    $testUser = User::load($user->id());
-
-    $this->assertEquals(1, $user->countField);
-    $this->assertEquals($user->countField, $testUser->countField);
-
-    $user->decrement('countField', 50);
-    $this->assertEquals(-49, $user->countField);
-
-    $user->increment('countField', 100);
+    $user->increment('testCounter', 100);
     $user->reload();
-    $this->assertEquals(51, $user->countField);
-  }*/
+    $this->assertEquals(51, $user->testCounter);
+  }
 }

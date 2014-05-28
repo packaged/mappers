@@ -147,6 +147,10 @@ abstract class BaseMapper implements IMapper
     return self::$classMetadata[$className];
   }
 
+  /**
+   * returns an array of columnName => fieldName
+   * @return array
+   */
   protected static function _getColumnMap()
   {
     $className = get_called_class();
