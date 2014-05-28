@@ -8,12 +8,13 @@
 
 namespace Packaged\Mappers;
 
-use cassandra\InvalidRequestException;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
 
 abstract class CassandraMapper extends BaseMapper
 {
+  protected static $_queryRetries = 3;
+
   public static function getServiceName()
   {
     return 'cassdb';
@@ -52,7 +53,7 @@ abstract class CassandraMapper extends BaseMapper
     $keys = [];
     foreach(self::_getKeys() as $k)
     {
-      $keys[] = '"'.$k . '" = ?';
+      $keys[] = '"' . $k . '" = ?';
     }
 
     $result = self::execute(
@@ -72,17 +73,29 @@ abstract class CassandraMapper extends BaseMapper
    */
   public static function execute($query, array $parameters = [])
   {
-    try
+    $retries = static::$_queryRetries;
+    while($retries)
     {
-      $conn   = static::getConnection();
-      $stmt   = $conn->prepare($query);
-      $return = $stmt->execute($parameters);
+      try
+      {
+        $conn = static::getConnection();
+        $stmt = $conn->prepare($query);
+        return $stmt->execute($parameters);
+      }
+      catch(\Exception $e)
+      {
+        $retries--;
+        if(!$retries)
+        {
+          if(isset($e->why))
+          {
+            throw new \Exception($e->why);
+          }
+          throw $e;
+        }
+      }
     }
-    catch(InvalidRequestException $e)
-    {
-      throw new \Exception($e->why);
-    }
-    return $return;
+    throw new \Exception('Query not successful, but failed to throw exception');
   }
 
   /**
@@ -194,7 +207,7 @@ abstract class CassandraMapper extends BaseMapper
     $keys = [];
     foreach(self::_getKeys() as $k)
     {
-      $keys[] = '"'.$k . '" = ?';
+      $keys[] = '"' . $k . '" = ?';
     }
     self::execute(
       'DELETE FROM ' . static::getTableName()
