@@ -1,6 +1,8 @@
 <?php
 namespace Packaged\Mappers;
 
+use cassandra\AuthenticationException;
+use cassandra\AuthorizationException;
 use cassandra\CassandraClient;
 use cassandra\Column;
 use cassandra\Compression;
@@ -10,6 +12,12 @@ use cassandra\CqlResult;
 use cassandra\CqlResultType;
 use cassandra\CqlRow;
 use cassandra\InvalidRequestException;
+use cassandra\NotFoundException;
+use cassandra\SchemaDisagreementException;
+use cassandra\TimedOutException;
+use cassandra\UnavailableException;
+use Packaged\Mappers\Exceptions\CassandraException;
+use Thrift\Exception\TApplicationException;
 use Thrift\Exception\TException;
 use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TFramedTransport;
@@ -287,7 +295,7 @@ class ThriftConnection
     }
     catch(\Exception $e)
     {
-      throw $e;
+      throw $this->formException($e);
     }
     return $this;
   }
@@ -336,8 +344,79 @@ class ThriftConnection
     }
     catch(\Exception $e)
     {
-      throw $e;
+      throw $this->formException($e);
     }
     return $return;
+  }
+
+  public function formException(\Exception $e)
+  {
+    try
+    {
+      throw $e;
+    }
+    catch(NotFoundException $e)
+    {
+      return new CassandraException(
+        "A specific column was requested that does not exist.", 404, $e
+      );
+    }
+    catch(InvalidRequestException $e)
+    {
+      return new CassandraException(
+        "Invalid request could mean keyspace or column family does not exist," .
+        " required parameters are missing, or a parameter is malformed. " .
+        "why contains an associated error message.", 400, $e
+      );
+    }
+    catch(UnavailableException $e)
+    {
+      return new CassandraException(
+        "Not all the replicas required could be created and/or read", 503, $e
+      );
+    }
+    catch(TimedOutException $e)
+    {
+      return new CassandraException(
+        "The node responsible for the write or read did not respond during" .
+        " the rpc interval specified in your configuration (default 10s)." .
+        " This can happen if the request is too large, the node is" .
+        " oversaturated with requests, or the node is down but the failure" .
+        " detector has not yet realized it (usually this takes < 30s).",
+        408, $e
+      );
+    }
+    catch(TApplicationException $e)
+    {
+      return new CassandraException(
+        "Internal server error or invalid Thrift method (possible if " .
+        "you are using an older version of a Thrift client with a " .
+        "newer build of the Cassandra server).", 500, $e
+      );
+    }
+    catch(AuthenticationException $e)
+    {
+      return new CassandraException(
+        "Invalid authentication request " .
+        "(user does not exist or credentials invalid)", 401, $e
+      );
+    }
+    catch(AuthorizationException $e)
+    {
+      return new CassandraException(
+        "Invalid authorization request (user does not have access to keyspace)",
+        403, $e
+      );
+    }
+    catch(SchemaDisagreementException $e)
+    {
+      return new CassandraException(
+        "Schemas are not in agreement across all nodes", 500, $e
+      );
+    }
+    catch(\Exception $e)
+    {
+      return new CassandraException($e->getMessage(), $e->getCode(), $e);
+    }
   }
 }
