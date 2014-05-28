@@ -84,14 +84,21 @@ abstract class CassandraMapper extends BaseMapper
       }
       catch(\Exception $e)
       {
-        $retries--;
-        if(!$retries)
+        if(strpos(
+            $e->getMessage(),
+            'unconfigured columnfamily ' . static::getTableName()
+          ) === 0
+        )
         {
-          if(isset($e->why))
+          static::createTable();
+        }
+        else
+        {
+          $retries--;
+          if(!$retries)
           {
-            throw new \Exception($e->why);
+            throw $e;
           }
-          throw $e;
         }
       }
     }
