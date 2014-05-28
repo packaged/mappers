@@ -24,7 +24,7 @@ abstract class CassandraMapper extends BaseMapper
    *
    * @param mixed $id
    *
-   * @return IMapper|static
+   * @return static
    * @throws Exceptions\InvalidLoadException
    * @throws \Exception
    */
