@@ -21,7 +21,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
 
   public function increment($field, $count)
   {
-    $column = static::_getMetadata()->columnNames[$field];
+    $column = static::_getFieldMap()[$field];
     $keys   = [];
     foreach(self::_getKeys() as $k)
     {
@@ -38,7 +38,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
 
   public function decrement($field, $count)
   {
-    $column = static::_getMetadata()->columnNames[$field];
+    $column = static::_getFieldMap()[$field];
     $keys   = [];
     foreach(self::_getKeys() as $k)
     {

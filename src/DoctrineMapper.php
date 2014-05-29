@@ -91,7 +91,7 @@ abstract class DoctrineMapper extends BaseMapper
   {
     // timestamps
     $new = new static();
-    foreach($this->_getMetadata()->fieldNames as $field)
+    foreach($this->_getColumnMap() as $field)
     {
       $new->$field = $this->$field;
     }

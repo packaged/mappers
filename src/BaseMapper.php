@@ -139,7 +139,6 @@ abstract class BaseMapper implements IMapper
   }
 
   private static $classMetadata = [];
-  private static $columnMap = [];
 
   /**
    * @return ClassMetadata
@@ -171,14 +170,16 @@ abstract class BaseMapper implements IMapper
    */
   protected static function _getColumnMap()
   {
-    $className = get_called_class();
-    if(!isset(self::$columnMap[$className]))
-    {
-      self::$columnMap[$className] = array_flip(
-        static::_getMetadata()->columnNames
-      );
-    }
-    return self::$columnMap[$className];
+    return static::_getMetadata()->fieldNames;
+  }
+
+  /**
+   * returns an array of fieldName => columnName
+   * @return array
+   */
+  protected static function _getFieldMap()
+  {
+    return static::_getMetadata()->columnNames;
   }
 
   public function id()
