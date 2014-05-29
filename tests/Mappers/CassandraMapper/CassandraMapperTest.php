@@ -211,7 +211,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
   public function testValidationPass()
   {
     $person              = new CassPerson();
-    $person->id          = uniqid('persontest');
+    $person->hash        = uniqid('persontest');
     $person->name        = 'Test User';
     $person->description = 'Test description';
     $person->testField   = 'test field test';

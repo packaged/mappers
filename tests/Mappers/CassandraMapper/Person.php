@@ -1,9 +1,16 @@
 <?php
 use Respect\Validation\Validator;
 
+/**
+ * Class CassPerson
+ * @Entity
+ */
 class CassPerson extends \Packaged\Mappers\CassandraMapper
 {
-  public $id;
+  /**
+   * @Id @Column(type="string")
+   */
+  public $hash;
   public $name;
   public $description;
   public $testField;
