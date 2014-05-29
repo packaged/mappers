@@ -50,6 +50,21 @@ abstract class CassandraMapper extends BaseMapper
     }
   }
 
+  public function hydrate(array $values)
+  {
+    foreach(static::_getMetadata()->fieldMappings as $map)
+    {
+      if(self::_mustPack($map) && $values[$map['columnName']]
+      )
+      {
+        $values[$map['columnName']] = self::_unpack(
+          $values[$map['columnName']]
+        );
+      }
+    }
+    return parent::hydrate($values);
+  }
+
   public static function loadOrNew($id)
   {
     try
@@ -175,13 +190,23 @@ abstract class CassandraMapper extends BaseMapper
 
   public function save()
   {
-    $this->validate();
+    if($this->exists())
+    {
+      $this->preUpdate();
+    }
+    else
+    {
+      $this->prePersist();
+    }
 
     $changes  = [];
-    $mappings = static::_getColumnMap();
-    foreach($mappings as $column => $field)
+    $mappings = static::_getMetadata()->fieldMappings;
+    foreach($mappings as $map)
     {
-      $changes[$column] = $this->$field;
+      $column           = $map['columnName'];
+      $field            = $map['fieldName'];
+      $changes[$column] = self::_mustPack($map)
+        ? self::_pack($this->$field) : $this->$field;
     }
 
     /*if(static::UseWideRows())
@@ -291,13 +316,6 @@ abstract class CassandraMapper extends BaseMapper
     )
     )
     {
-      /*if(static::UseWideRows())
-      {
-        $conn->prepare(
-          'CREATE TABLE IF NOT EXISTS "Cubex"."cass_users" (key blob, column1 ascii, value blob, PRIMARY KEY (key, column1)) WITH COMPACT STORAGE;'
-        );
-        $conn->execute([]);
-      }*/
       $md      = self::_getMetadata();
       $columns = [];
       foreach($md->fieldMappings as $map)
@@ -311,35 +329,65 @@ abstract class CassandraMapper extends BaseMapper
     }
   }
 
-  private static $cqlTypes = [
-    'ascii'     => 'string',
+  private static $_cqlTypes = [
+    'smallint'  => 'int',
+    'integer'   => 'int',
     'bigint'    => 'bigint',
+    'decimal'   => 'decimal',
+    'float'     => 'float',
+    'string'    => 'varchar',
+    'text'      => 'varchar',
+    'guid'      => 'uuid',
+    'binary'    => 'blob',
     'blob'      => 'blob',
     'boolean'   => 'boolean',
-    'decimal'   => 'float',
-    'double'    => 'float',
-    'float'     => 'float',
-    'inet'      => 'string',
-    'int'       => 'integer',
-    'set'       => 'simple_array',
-    'text'      => 'string',
-    'timestamp' => 'time',
-    'uuid'      => 'uuid',
-    'varchar'   => 'string',
-    'varint'    => 'integer',
-    'counter'   => 'integer',
+    'date'      => 'timestamp',
+    'datetime'  => 'timestamp',
+    'datetimez' => 'timestamp',
+    'time'      => 'timestamp',
   ];
+
+  private static $_cqlPackTypes = ['int', 'timestamp', 'counter'];
 
   protected static function _getCqlField($map)
   {
-    if(isset(self::$cqlTypes[$map['type']]))
+    return '"' . $map['columnName'] . '" ' . static::_getCqlFieldType($map);
+  }
+
+  protected static function _getCqlFieldType($map)
+  {
+    if(isset(self::$_cqlTypes[$map['type']]))
     {
-      $type = self::$cqlTypes[$map['type']];
+      $type = self::$_cqlTypes[$map['type']];
     }
     else
     {
-      $type = array_search($map['type'], self::$cqlTypes);
+      $type = $map['type'];
     }
-    return '"' . $map['columnName'] . '" ' . $type;
+    return $type;
+  }
+
+  protected static function _mustPack($map)
+  {
+    return array_search(
+      static::_getCqlFieldType($map),
+      self::$_cqlPackTypes
+    ) !== false;
+  }
+
+  protected static function _pack($value)
+  {
+    $highMap = 0xffffffff00000000;
+    $lowMap  = 0x00000000ffffffff;
+    $higher  = ($value & $highMap) >> 32;
+    $lower   = $value & $lowMap;
+    $packed  = pack('NN', $higher, $lower);
+    return $packed;
+  }
+
+  protected static function _unpack($packed)
+  {
+    list($higher, $lower) = array_values(unpack('N2', $packed));
+    return $higher << 32 | $lower;
   }
 }
