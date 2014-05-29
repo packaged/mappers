@@ -16,9 +16,9 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
   /**
    * @var ConnectionResolver
    */
-  private $_resolver;
+  private static $_resolver;
 
-  public function setUp()
+  public static function setUpBeforeClass()
   {
     require_once __DIR__ . '/Mappers/DifferentFieldsMapper.php';
     require_once __DIR__ . '/Mappers/NonTimestampMapper.php';
@@ -49,10 +49,10 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
       new \Doctrine\DBAL\Logging\EchoSQLLogger()
     );*/
 
-    $this->_resolver = new ConnectionResolver();
-    $this->_resolver->addConnection('db', $db);
+    self::$_resolver = new ConnectionResolver();
+    self::$_resolver->addConnection('db', $db);
 
-    DoctrineMapper::setConnectionResolver($this->_resolver);
+    DoctrineMapper::setConnectionResolver(self::$_resolver);
 
     $tool    = new SchemaTool($db);
     $classes = [
@@ -108,7 +108,7 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
     /**
      * @var EntityManager $conn
      */
-    $conn                = $this->_resolver->getConnection('db');
+    $conn                = self::$_resolver->getConnection('db');
     $actualFieldMappings = $conn->getClassMetadata($className)->fieldMappings;
 
     ksort($expectedFieldMappings);
