@@ -181,9 +181,16 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
 
     $user->delete();
 
-    $deleted = CassUser::load($id);
+    try
+    {
+      CassUser::load($id);
+      $this->fail('Expected Exception not thrown');
+    }
+    catch(\Packaged\Mappers\Exceptions\InvalidLoadException $e)
+    {
+    }
+    $deleted = CassUser::loadOrNew($id);
     $this->assertFalse($deleted->exists());
-    $this->compareObjects($deleted, new CassUser());
   }
 
   public function testValidationFailure()
