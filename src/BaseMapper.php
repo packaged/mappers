@@ -43,7 +43,7 @@ abstract class BaseMapper implements IMapper
   /**
    * @returns bool
    */
-  public static function getAutoTimestamp()
+  public static function useAutoTimestamp()
   {
     return true;
   }
@@ -63,7 +63,7 @@ abstract class BaseMapper implements IMapper
    */
   public function prePersist()
   {
-    if(static::getAutoTimestamp())
+    if(static::useAutoTimestamp())
     {
       $this->createdAt = new \DateTime('now');
       $this->updatedAt = new \DateTime('now');
@@ -76,7 +76,7 @@ abstract class BaseMapper implements IMapper
    */
   public function preUpdate()
   {
-    if(static::getAutoTimestamp())
+    if(static::useAutoTimestamp())
     {
       $this->updatedAt = new \DateTime('now');
     }

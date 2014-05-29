@@ -9,7 +9,7 @@ class NonTimestampMapper extends DoctrineMapper
   public $someData;
   public $id;
 
-  public static function getAutoTimestamp()
+  public static function useAutoTimestamp()
   {
     return false;
   }

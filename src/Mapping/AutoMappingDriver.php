@@ -63,7 +63,7 @@ class AutoMappingDriver extends StaticPHPDriver
       if($propName == 'createdAt')
       {
         if(!$this->isTransient($className) &&
-          call_user_func($className . '::getAutoTimestamp')
+          call_user_func($className . '::useAutoTimestamp')
         )
         {
           $metadata->mapField(
@@ -80,7 +80,7 @@ class AutoMappingDriver extends StaticPHPDriver
       else if($propName == 'updatedAt')
       {
         if(!$this->isTransient($className) &&
-          call_user_func($className . '::getAutoTimestamp')
+          call_user_func($className . '::useAutoTimestamp')
         )
         {
           $metadata->mapField(

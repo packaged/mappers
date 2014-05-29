@@ -8,7 +8,7 @@ class DifferentFieldsMapper extends \Packaged\Mappers\DoctrineMapper
   public $id;
   public $someData;
 
-  public static function getAutoTimestamp()
+  public static function useAutoTimestamp()
   {
     return true;
   }
