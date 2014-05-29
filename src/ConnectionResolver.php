@@ -9,11 +9,11 @@ class ConnectionResolver implements IConnectionResolver
 
   public function getConnection($name)
   {
-    if(isset($this->_connections[$name]))
+    if(!isset($this->_connections[$name]))
     {
-      return $this->_connections[$name];
+      throw new MapperException('Connection (' . $name . ') not found');
     }
-    throw new MapperException('Connection (' . $name . ') not found');
+      return $this->_connections[$name];
   }
 
   public function addConnection($name, $connection)
