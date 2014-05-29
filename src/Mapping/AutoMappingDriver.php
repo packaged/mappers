@@ -229,6 +229,6 @@ class AutoMappingDriver extends StaticPHPDriver
    */
   public function isTransient($className)
   {
-    return !is_subclass_of($className, 'Packaged\Mappers\DoctrineMapper');
+    return !is_subclass_of($className, 'Packaged\Mappers\BaseMapper');
   }
 }
