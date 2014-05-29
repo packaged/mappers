@@ -84,15 +84,7 @@ abstract class CassandraMapper extends BaseMapper
       }
       catch(\Exception $e)
       {
-        if(strpos(
-            $e->getMessage(),
-            'unconfigured columnfamily ' . static::getTableName()
-          ) === 0
-        )
-        {
-          static::createTable();
-        }
-        else
+        if(!static::_handleException($e))
         {
           $retries--;
           if(!$retries)
@@ -103,6 +95,20 @@ abstract class CassandraMapper extends BaseMapper
       }
     }
     throw new \Exception('Query not successful, but failed to throw exception');
+  }
+
+  protected static function _handleException(\Exception $e)
+  {
+    if(strpos(
+        $e->getMessage(),
+        'unconfigured columnfamily ' . static::getTableName()
+      ) === 0
+    )
+    {
+      static::createTable();
+      return true;
+    }
+    return false;
   }
 
   /**
