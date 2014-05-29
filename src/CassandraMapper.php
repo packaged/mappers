@@ -37,15 +37,30 @@ abstract class CassandraMapper extends BaseMapper
     }
     else
     {
-      $data   = self::getData($id);
-      $mapper = new static();
-      if($data)
+      $data = self::getData($id);
+      if(!$data)
       {
-        $mapper->hydrate($data);
-        $mapper->setExists(true);
+        throw new InvalidLoadException('No object found with that ID');
       }
+      $mapper = new static();
+      $mapper->hydrate($data);
+      $mapper->setExists(true);
       return $mapper;
     }
+  }
+
+  public static function loadOrNew($id)
+  {
+    try
+    {
+      $mapper = static::load($id);
+    }
+    catch(\Exception $e)
+    {
+      $mapper = new static();
+      $mapper->setId($id);
+    }
+    return $mapper;
   }
 
   public static function getData($id)
