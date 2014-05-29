@@ -14,6 +14,7 @@ use Packaged\Mappers\Exceptions\MapperException;
 abstract class CassandraMapper extends BaseMapper
 {
   protected static $_queryRetries = 3;
+  protected static $_autoTimeFormat = self::AUTOTIME_FORMAT_TIMESTAMP;
 
   public static function getServiceName()
   {

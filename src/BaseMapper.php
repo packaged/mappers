@@ -26,6 +26,10 @@ abstract class BaseMapper implements IMapper
    */
   public $updatedAt;
 
+  protected static $_autoTimeFormat = self::AUTOTIME_FORMAT_DATETIME;
+  const AUTOTIME_FORMAT_DATETIME = 'datetime';
+  const AUTOTIME_FORMAT_TIMESTAMP = 'timestamp';
+
   protected static $_resolver;
   protected $_exists = false;
   /**
@@ -58,6 +62,19 @@ abstract class BaseMapper implements IMapper
     return 'updated_at';
   }
 
+  protected static function _getAutoTime()
+  {
+    if(static::$_autoTimeFormat == self::AUTOTIME_FORMAT_DATETIME)
+    {
+      return new \DateTime('now');
+    }
+    if(static::$_autoTimeFormat == self::AUTOTIME_FORMAT_TIMESTAMP)
+    {
+      return time();
+    }
+    return time();
+  }
+
   /**
    * @PrePersist
    */
@@ -65,8 +82,9 @@ abstract class BaseMapper implements IMapper
   {
     if(static::useAutoTimestamp())
     {
-      $this->createdAt = new \DateTime('now');
-      $this->updatedAt = new \DateTime('now');
+      $time            = static::_getAutoTime();
+      $this->createdAt = $time;
+      $this->updatedAt = $time;
     }
     $this->validate();
   }
@@ -78,7 +96,7 @@ abstract class BaseMapper implements IMapper
   {
     if(static::useAutoTimestamp())
     {
-      $this->updatedAt = new \DateTime('now');
+      $this->updatedAt = static::_getAutoTime();
     }
     $this->validate();
   }
