@@ -1,4 +1,10 @@
 <?php
+use cassandra\Cassandra_multiget_count_args;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\Mapping\ClassMetadata;
+use Packaged\Mappers\CassandraMapper;
+use Packaged\Mappers\Mapping\AutoMappingDriver;
+use Packaged\Mappers\Mapping\ChainedDriver;
 
 /**
  * Created by PhpStorm.
@@ -13,6 +19,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/User.php';
     require_once __DIR__ . '/Person.php';
     require_once __DIR__ . '/CounterTest.php';
+    require_once __DIR__ . '/KeyedUser.php';
 
     $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
     $cassDb->prepare(
@@ -257,5 +264,49 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $user->reload();
     $this->assertEquals(51, $user->testCounter);
     $this->assertEquals(PHP_INT_MAX, $user->maxCounterTest);
+  }
+
+  public function testKeys()
+  {
+    KeyedUser::createTable();
+
+    $keyspace = 'Cubex';
+    $cfName = 'keyed_users';
+
+    $keys = KeyedUser::execute(
+      'SELECT column_aliases, key_aliases '
+      . 'FROM system.schema_columnfamilies '
+      . 'WHERE keyspace_name = ? '
+      . 'AND columnfamily_name = ?',
+      [$keyspace, $cfName]
+    );
+
+    $this->assertEquals(
+      [
+        [
+          'column_aliases' => '["email","username"]',
+          'key_aliases'    => '["brandId","userId"]',
+        ]
+      ],
+      $keys,
+      "Key columns do not match"
+    );
+
+    $cols = KeyedUser::execute(
+      'SELECT column_name FROM system.schema_columns '
+      . 'WHERE keyspace_name = ? AND columnfamily_name = ?',
+      [$keyspace, $cfName]
+    );
+
+    $this->assertEquals(
+      [
+        ['column_name' => 'created_at'],
+        ['column_name' => 'display_name'],
+        ['column_name' => 'password'],
+        ['column_name' => 'updated_at']
+      ],
+      $cols,
+      "Non-key columns do not match"
+    );
   }
 }
