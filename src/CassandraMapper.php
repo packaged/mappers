@@ -8,11 +8,14 @@
 
 namespace Packaged\Mappers;
 
+use Packaged\Mappers\Exceptions\CassandraException;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
 
 abstract class CassandraMapper extends BaseMapper
 {
+  const PK_INDEX_NAME = 'primary_key';
+
   protected static $_queryRetries = 3;
   protected static $_autoTimeFormat = self::AUTOTIME_FORMAT_TIMESTAMP;
 
@@ -317,15 +320,55 @@ abstract class CassandraMapper extends BaseMapper
     )
     )
     {
+      /**
+       * Fields that make up the partition key
+       */
+      $partitionKeyFields = [];
+      /**
+       * Additional fields that make up the primary key but are not
+       * part of the partition key
+       */
+      $primaryKeyFields = [];
+
       $md      = self::_getMetadata();
       $columns = [];
       foreach($md->fieldMappings as $map)
       {
         $columns[] = static::_getCqlField($map);
       }
+
+      if(!empty($md->identifier))
+      {
+        $partitionKeyFields = $md->identifier;
+      }
+      if(!empty($md->table['indexes'][self::PK_INDEX_NAME]['columns']))
+      {
+        $primaryKeyFields = $md->table['indexes'][self::PK_INDEX_NAME]['columns'];
+      }
+
+      $pkStr = '';
+      if(count($partitionKeyFields) > 0)
+      {
+        $pkStr = '(' . self::_implodeColumns($partitionKeyFields) . ')';
+      }
+      if(count($primaryKeyFields) > 0)
+      {
+        if($pkStr != "")
+        {
+          $pkStr .= ',';
+        }
+        $pkStr .= self::_implodeColumns(
+          array_diff($primaryKeyFields, $partitionKeyFields)
+        );
+      }
+      if($pkStr == '')
+      {
+        throw new \Exception('Error: No primary key specified');
+      }
+
       $query = 'CREATE TABLE "' . $table . '" ('
         . implode(',', $columns)
-        . ', PRIMARY KEY (' . implode(',', $md->identifier) . '))';
+        . ', PRIMARY KEY (' . $pkStr . '))';
       self::execute($query);
     }
   }
@@ -352,7 +395,8 @@ abstract class CassandraMapper extends BaseMapper
 
   protected static function _getCqlField($map)
   {
-    return '"' . $map['columnName'] . '" ' . static::_getCqlFieldType($map);
+    return self::_escapeColumnName($map['columnName']) . ' '
+    . static::_getCqlFieldType($map);
   }
 
   protected static function _getCqlFieldType($map)
@@ -366,6 +410,21 @@ abstract class CassandraMapper extends BaseMapper
       $type = $map['type'];
     }
     return $type;
+  }
+
+  protected static function _escapeColumnName($columnName)
+  {
+    return '"' . $columnName . '"';
+  }
+
+  protected static function _implodeColumns(array $columns, $separator = ',')
+  {
+    $escapedCols = [];
+    foreach($columns as $column)
+    {
+      $escapedCols[] = self::_escapeColumnName($column);
+    }
+    return implode($separator, $escapedCols);
   }
 
   protected static function _mustPack($map)
