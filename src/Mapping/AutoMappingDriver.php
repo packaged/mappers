@@ -13,6 +13,7 @@ use Doctrine\ORM\Mapping\MappingException;
 class AutoMappingDriver extends StaticPHPDriver
 {
   protected $_idType;
+
   public function __construct($idType = 'integer', $paths = null)
   {
     $this->_idType = $idType;
@@ -60,67 +61,70 @@ class AutoMappingDriver extends StaticPHPDriver
         $mapping = null;
       }
 
-      if($propName == 'createdAt')
+      if(!$mapping)
       {
-        if(!$this->isTransient($className) &&
-          call_user_func($className . '::useAutoTimestamp')
-        )
+        if($propName == 'createdAt')
         {
-          $metadata->mapField(
-            [
-              'fieldName'  => 'createdAt',
-              'columnName' => call_user_func(
-                $className . '::getCreatedAtColumn'
-              ),
-              'type'       => 'datetime',
-            ]
-          );
+          if(!$this->isTransient($className) && !$refClass->isAbstract() &&
+            call_user_func($className . '::useAutoTimestamp')
+          )
+          {
+            $metadata->mapField(
+              [
+                'fieldName'  => 'createdAt',
+                'columnName' => call_user_func(
+                  $className . '::getCreatedAtColumn'
+                ),
+                'type'       => 'datetime',
+              ]
+            );
+          }
         }
-      }
-      else if($propName == 'updatedAt')
-      {
-        if(!$this->isTransient($className) &&
-          call_user_func($className . '::useAutoTimestamp')
-        )
+        else if($propName == 'updatedAt')
         {
-          $metadata->mapField(
-            [
-              'fieldName'  => 'updatedAt',
-              'columnName' => call_user_func(
-                $className . '::getUpdatedAtColumn'
-              ),
-              'type'       => 'datetime',
-            ]
-          );
+          if(!$this->isTransient($className) && !$refClass->isAbstract() &&
+            call_user_func($className . '::useAutoTimestamp')
+          )
+          {
+            $metadata->mapField(
+              [
+                'fieldName'  => 'updatedAt',
+                'columnName' => call_user_func(
+                  $className . '::getUpdatedAtColumn'
+                ),
+                'type'       => 'datetime',
+              ]
+            );
+          }
         }
-      }
-      else if(!$mapping)
-      {
-        $columnName = Inflector::tableize($propName);
+        else
+        {
+          $columnName = Inflector::tableize($propName);
 
-        $fieldMap = [
-          'fieldName'  => $propName,
-          'columnName' => $columnName,
-          'type'       => $this->_getDefaultDataType($columnName)
-        ];
-        if($columnName == 'id')
-        {
-          $fieldMap['id']            = true;
-          $fieldMap['autoincrement'] = true;
-          $fieldMap['unsigned']      = true;
-          $needAutoGenerator         = true;
+          $fieldMap = [
+            'fieldName'  => $propName,
+            'columnName' => $columnName,
+            'type'       => $this->_getDefaultDataType($columnName)
+          ];
+          if($columnName == 'id')
+          {
+            $fieldMap['id']            = true;
+            $fieldMap['autoincrement'] = true;
+            $fieldMap['unsigned']      = true;
+            $needAutoGenerator         = true;
+          }
+          else if(in_array(
+            $columnName,
+            ['price', 'tax', 'amount', 'cost', 'total']
+          )
+          )
+          {
+            // DECIMAL(10,2)
+            $fieldMap['precision'] = 10;
+            $fieldMap['scale']     = 2;
+          }
+          $metadata->mapField($fieldMap);
         }
-        else if(in_array(
-          $columnName,
-          ['price', 'tax', 'amount', 'cost', 'total']
-        )
-        )
-        {
-          // DECIMAL(10,2)
-          $fieldMap['precision'] = 10;
-          $fieldMap['scale']     = 2;
-        }
-        $metadata->mapField($fieldMap);
       }
     }
 

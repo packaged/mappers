@@ -132,9 +132,11 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
     {
     }
 
+    $uniqueDescription = uniqid('usertesting');
+
     $user              = new User();
     $user->name        = 'name' . rand() . time();
-    $user->description = 'usertesting';
+    $user->description = $uniqueDescription;
     $user->save();
     $this->assertTrue($user->exists());
 
@@ -149,7 +151,7 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
     $newUser = $user->saveAsNew();
     $user->getEntityManager()->detach($user);
     $newUser->getEntityManager()->detach($newUser);
-    $this->compareObjects(User::loadWhere(['description'=>'usertesting']), [$user, $newUser]);
+    $this->compareObjects(User::loadWhere(['description'=>$uniqueDescription]), [$user, $newUser]);
 
     $user->name = 'name' . rand() . time();
     $user->save();

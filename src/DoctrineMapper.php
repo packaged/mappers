@@ -12,7 +12,7 @@ use Doctrine\ORM\Tools\SchemaTool;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 
 /**
- * Class BaseMapper
+ * Class DoctrineMapper
  * @package Packaged\Mappers
  * @MappedSuperclass
  * @HasLifecycleCallbacks
@@ -83,6 +83,30 @@ abstract class DoctrineMapper extends BaseMapper
   }
 
   /**
+   * @PrePersist
+   */
+  public function preCreate()
+  {
+    parent::preCreate();
+  }
+
+  /**
+   * @PreUpdate
+   */
+  public function preUpdate()
+  {
+    parent::preUpdate();
+  }
+
+  /**
+   * @PostLoad
+   */
+  public function postLoad()
+  {
+    $this->setExists(true);
+  }
+
+  /**
    * @param $newKey
    *
    * @return static
@@ -103,14 +127,6 @@ abstract class DoctrineMapper extends BaseMapper
     }
     $new->save();
     return $new;
-  }
-
-  /**
-   * @PostLoad
-   */
-  public function onLoadSetExists()
-  {
-    $this->setExists(true);
   }
 
   public function reload()
@@ -180,7 +196,7 @@ abstract class DoctrineMapper extends BaseMapper
 
   public static function createTable()
   {
-    $em = static::getEntityManager();
+    $em      = static::getEntityManager();
     $tool    = new SchemaTool($em);
     $classes = [$em->getClassMetadata(get_called_class())];
     $tool->dropSchema($classes);

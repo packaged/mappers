@@ -10,13 +10,13 @@ namespace Packaged\Mappers;
 
 abstract class CounterCassandraMapper extends CassandraMapper
 {
-  protected static function _getCqlField($map)
+  protected static function _getCqlFieldType($map)
   {
     if(isset($map['id']) && $map['id'])
     {
-      return parent::_getCqlField($map);
+      return parent::_getCqlFieldType($map);
     }
-    return '"' . $map['columnName'] . '" counter';
+    return 'counter';
   }
 
   public function increment($field, $count)

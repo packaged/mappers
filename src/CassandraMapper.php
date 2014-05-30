@@ -54,7 +54,8 @@ abstract class CassandraMapper extends BaseMapper
   {
     foreach(static::_getMetadata()->fieldMappings as $map)
     {
-      if(self::_mustPack($map) && $values[$map['columnName']]
+      if(self::_mustPack($map)
+        && isset($values[$map['columnName']]) && $values[$map['columnName']]
       )
       {
         $values[$map['columnName']] = self::_unpack(
@@ -196,7 +197,7 @@ abstract class CassandraMapper extends BaseMapper
     }
     else
     {
-      $this->prePersist();
+      $this->preCreate();
     }
 
     $changes  = [];

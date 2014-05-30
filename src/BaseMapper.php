@@ -75,10 +75,7 @@ abstract class BaseMapper implements IMapper
     return time();
   }
 
-  /**
-   * @PrePersist
-   */
-  public function prePersist()
+  public function preCreate()
   {
     if(static::useAutoTimestamp())
     {
@@ -89,9 +86,6 @@ abstract class BaseMapper implements IMapper
     $this->validate();
   }
 
-  /**
-   * @PreUpdate
-   */
   public function preUpdate()
   {
     if(static::useAutoTimestamp())
