@@ -8,7 +8,6 @@
 
 namespace Packaged\Mappers;
 
-use Packaged\Mappers\Exceptions\CassandraException;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
 
@@ -395,7 +394,7 @@ abstract class CassandraMapper extends BaseMapper
 
   protected static function _getCqlField($map)
   {
-    return self::_escapeColumnName($map['columnName']) . ' '
+    return self::_escapeIdentifier($map['columnName']) . ' '
     . static::_getCqlFieldType($map);
   }
 
@@ -412,7 +411,7 @@ abstract class CassandraMapper extends BaseMapper
     return $type;
   }
 
-  protected static function _escapeColumnName($columnName)
+  protected static function _escapeIdentifier($columnName)
   {
     return '"' . $columnName . '"';
   }
@@ -422,7 +421,7 @@ abstract class CassandraMapper extends BaseMapper
     $escapedCols = [];
     foreach($columns as $column)
     {
-      $escapedCols[] = self::_escapeColumnName($column);
+      $escapedCols[] = self::_escapeIdentifier($column);
     }
     return implode($separator, $escapedCols);
   }
