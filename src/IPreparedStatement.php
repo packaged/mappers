@@ -5,7 +5,7 @@
 
 namespace Packaged\Mappers;
 
-interface ICQLPreparedStatement
+interface IPreparedStatement
 {
   public function execute(array $params = []);
 }

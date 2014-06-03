@@ -7,7 +7,7 @@ namespace Packaged\Mappers;
 
 use cassandra\CqlPreparedResult;
 
-class ThriftCQLPreparedStatement implements ICQLPreparedStatement
+class ThriftCQLPreparedStatement implements IPreparedStatement
 {
   private $_rawStatement;
   private $_connection;

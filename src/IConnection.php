@@ -10,15 +10,15 @@ interface IConnection
   /**
    * @param string $query
    *
-   * @return ICQLPreparedStatement
+   * @return IPreparedStatement
    */
   public function prepare($query);
 
   /**
-   * @param ICQLPreparedStatement $statement
+   * @param IPreparedStatement $statement
    * @param array|null            $params
    *
    * @return mixed
    */
-  public function execute(ICQLPreparedStatement $statement, array $params = null);
+  public function execute(IPreparedStatement $statement, array $params = null);
 }

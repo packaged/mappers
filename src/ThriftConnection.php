@@ -327,7 +327,7 @@ class ThriftConnection implements IConnection
   }
 
   /**
-   * @param ICQLPreparedStatement $statement
+   * @param IPreparedStatement $statement
    * @param array                 $parameters
    * @param int                   $consistency
    *
@@ -336,7 +336,7 @@ class ThriftConnection implements IConnection
    * @throws \Exception
    */
   public function execute(
-    ICQLPreparedStatement $statement, array $parameters = [],
+    IPreparedStatement $statement, array $parameters = [],
     $consistency = ConsistencyLevel::QUORUM
   )
   {
