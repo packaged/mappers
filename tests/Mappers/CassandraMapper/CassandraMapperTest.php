@@ -22,15 +22,15 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/KeyedUser.php';
 
     $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
-    $cassDb->prepare(
+    $stmt = $cassDb->prepare(
       'SELECT * FROM system.schema_keyspaces where keyspace_name = \'Cubex\''
     );
-    if(!$cassDb->execute([]))
+    if(!$cassDb->execute($stmt))
     {
-      $cassDb->prepare(
+      $stmt = $cassDb->prepare(
         'CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':1};'
       );
-      $cassDb->execute([]);
+      $cassDb->execute($stmt);
     }
     $cassDb->setKeyspace('Cubex');
 

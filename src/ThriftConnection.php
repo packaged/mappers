@@ -23,10 +23,8 @@ use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TSocketPool;
 
-class ThriftConnection
+class ThriftConnection implements IConnection
 {
-  protected $_queryItemId;
-
   protected $_hosts;
   protected $_port;
   protected $_persistConnection = false;
@@ -46,6 +44,11 @@ class ThriftConnection
 
   protected $_processingBatch = false;
   protected $_batchMutation = null;
+
+  /**
+   * @var ThriftCQLPreparedStatement[]
+   */
+  protected $_stmtCache = [];
 
   public static function newConnection($config)
   {
@@ -186,6 +189,7 @@ class ThriftConnection
 
   public function disconnect()
   {
+    $this->_clearStmtCache();
     $this->_client = null;
     $this->_transport->close();
     $this->_transport = null;
@@ -280,35 +284,74 @@ class ThriftConnection
     return $this->_describe("keyspace", null, [$keyspace]);
   }
 
-  public function prepare($query, $compression = Compression::NONE)
-  {
-    try
-    {
-      $prep = $this->client()->prepare_cql3_query(
-        $query,
-        $compression
-      );
-      /**
-       * @var $prep CqlPreparedResult
-       */
-      $this->_queryItemId = $prep->itemId;
-    }
-    catch(\Exception $e)
-    {
-      throw $this->formException($e);
-    }
-    return $this;
-  }
-
-  public function execute(
-    array $parameters = null, $consistency = ConsistencyLevel::QUORUM
+  /**
+   * @param string $query
+   * @param int    $compression
+   * @param bool   $allowStmtCache
+   *
+   * @return ThriftCQLPreparedStatement
+   * @throws Exceptions\CassandraException
+   */
+  public function prepare(
+    $query, $compression = Compression::NONE, $allowStmtCache = true
   )
   {
+    $cacheKey = md5($query);
+    if($allowStmtCache && (!empty($this->_stmtCache[$cacheKey])))
+    {
+      $stmt = $this->_stmtCache[$cacheKey];
+    }
+    else
+    {
+      try
+      {
+        $prep = $this->client()->prepare_cql3_query(
+          $query,
+          $compression
+        );
+        /**
+         * @var $prep CqlPreparedResult
+         */
+        $stmt = new ThriftCQLPreparedStatement($this, $prep);
+        if($allowStmtCache)
+        {
+          $this->_stmtCache[$cacheKey] = $stmt;
+        }
+      }
+      catch(\Exception $e)
+      {
+        throw $this->formException($e);
+      }
+    }
+    return $stmt;
+  }
+
+  /**
+   * @param ICQLPreparedStatement $statement
+   * @param array                 $parameters
+   * @param int                   $consistency
+   *
+   * @return array|mixed
+   * @throws Exceptions\CassandraException
+   * @throws \Exception
+   */
+  public function execute(
+    ICQLPreparedStatement $statement, array $parameters = [],
+    $consistency = ConsistencyLevel::QUORUM
+  )
+  {
+    if(! ($statement instanceof ThriftCQLPreparedStatement))
+    {
+      throw new \Exception(
+        'Statement not an instance of ThriftCQLPreparedStatement'
+      );
+    }
+
     $return = [];
     try
     {
       $result = $this->client()->execute_prepared_cql3_query(
-        $this->_queryItemId,
+        $statement->getQueryId(),
         $parameters,
         $consistency
       );
@@ -347,6 +390,11 @@ class ThriftConnection
       throw $this->formException($e);
     }
     return $return;
+  }
+
+  private function _clearStmtCache()
+  {
+    $this->_stmtCache = [];
   }
 
   public function formException(\Exception $e)
