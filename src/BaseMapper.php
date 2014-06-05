@@ -80,13 +80,21 @@ abstract class BaseMapper implements IMapper
     return time();
   }
 
+  public function touch()
+  {
+    $time = static::_getAutoTime();
+    if(!$this->createdAt)
+    {
+      $this->createdAt = $time;
+    }
+    $this->updatedAt = $time;
+  }
+
   public function preCreate()
   {
     if(static::useAutoTimestamp())
     {
-      $time            = static::_getAutoTime();
-      $this->createdAt = $time;
-      $this->updatedAt = $time;
+      $this->touch();
     }
     $this->validate();
   }
@@ -95,7 +103,7 @@ abstract class BaseMapper implements IMapper
   {
     if(static::useAutoTimestamp())
     {
-      $this->updatedAt = static::_getAutoTime();
+      $this->touch();
     }
     $this->validate();
   }
