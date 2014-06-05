@@ -257,6 +257,7 @@ abstract class CassandraMapper extends BaseMapper
   {
     $data = self::getData($this->id());
     $this->hydrate($data);
+    return $this;
   }
 
   public function delete()
@@ -272,6 +273,7 @@ abstract class CassandraMapper extends BaseMapper
       (array)$this->id()
     );
     $this->setExists(false);
+    return $this;
   }
 
   public function id()
