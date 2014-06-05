@@ -68,6 +68,11 @@ abstract class CassandraMapper extends BaseMapper
     return parent::hydrate($values);
   }
 
+  /**
+   * @param $id
+   *
+   * @return static
+   */
   public static function loadOrNew($id)
   {
     try
