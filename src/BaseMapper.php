@@ -29,6 +29,7 @@ abstract class BaseMapper implements IMapper
   protected static $_autoTimeFormat = self::AUTOTIME_FORMAT_DATETIME;
   const AUTOTIME_FORMAT_DATETIME = 'datetime';
   const AUTOTIME_FORMAT_TIMESTAMP = 'timestamp';
+  const AUTOTIME_FORMAT_MILLISECONDS = 'milliseconds';
 
   protected static $_resolver;
   protected $_exists = false;
@@ -71,6 +72,10 @@ abstract class BaseMapper implements IMapper
     if(static::$_autoTimeFormat == self::AUTOTIME_FORMAT_TIMESTAMP)
     {
       return time();
+    }
+    if(static::$_autoTimeFormat == self::AUTOTIME_FORMAT_MILLISECONDS)
+    {
+      return floor(microtime(true) * 1000);
     }
     return time();
   }

@@ -16,7 +16,7 @@ abstract class CassandraMapper extends BaseMapper
   const PK_INDEX_NAME = 'primary_key';
 
   protected static $_queryRetries = 3;
-  protected static $_autoTimeFormat = self::AUTOTIME_FORMAT_TIMESTAMP;
+  protected static $_autoTimeFormat = self::AUTOTIME_FORMAT_MILLISECONDS;
 
   public static function getServiceName()
   {
