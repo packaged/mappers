@@ -58,7 +58,7 @@ abstract class DoctrineMapper extends BaseMapper
    * @param null  $limit
    * @param null  $offset
    *
-   * @return array
+   * @return static[]
    */
   public static function loadWhere(
     array $criteria, $order = null, $limit = null, $offset = null

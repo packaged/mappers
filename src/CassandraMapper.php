@@ -156,44 +156,36 @@ abstract class CassandraMapper extends BaseMapper
    * @param null  $limit
    * @param null  $offset
    *
-   * @return IMapper[]
+   * @return static|static[]
    */
   public static function loadWhere(
     array $criteria, $order = null, $limit = null, $offset = null
   )
   {
-    throw new InvalidLoadException('loadWhere is not currently supported');
-    /*
-      $where  = $criteria ? ' WHERE ' . implode(' AND ', $criteria) : '';
-      $result = self::execute(
-        'SELECT * FROM ' . static::getTableName() . $where
-      );
+    $whereArray = [];
+    foreach($criteria as $k => $v)
+    {
+      $whereArray[] = '"' . $k . '" = ?';
+    }
+    $where  = $criteria ? ' WHERE ' . implode(' AND ', $whereArray) : '';
+    $result = self::execute(
+      'SELECT * FROM ' . static::getTableName() . $where,
+      $criteria
+    );
 
-      $data = [];
-      foreach($result as $row)
-      {
-        if(isset($row['key'])
-          && isset($row['column1'])
-          && isset($row['value'])
-        )
-        { // for dynamic tables, column# => value
-          $data[$row['key']][$row['column1']] = $row['value'];
-        }
-        else
-        {
-          $data[] = $row;
-        }
-      }
-      var_dump($data);
-      foreach($data as $k => $v)
-      {
-        $data[$k]     = new static();
-        $data[$k]->id = $k;
-        $data[$k]->hydrate($v);
-      }
+    $data = [];
+    foreach($result as $row)
+    {
+      $obj = new static();
+      $obj->hydrate($row);
+      $data[] = $obj;
+    }
 
-      return $data;
-    */
+    if(count($data) === 1)
+    {
+      return reset($data);
+    }
+    return $data;
   }
 
   public function save()
