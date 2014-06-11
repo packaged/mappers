@@ -397,7 +397,7 @@ abstract class CassandraMapper extends BaseMapper
     'time'      => 'timestamp',
   ];
 
-  private static $_cqlPackTypes = ['int', 'timestamp', 'counter'];
+  private static $_cqlPackTypes = ['int', 'bigint', 'timestamp', 'counter'];
 
   protected static function _getCqlField($map)
   {
