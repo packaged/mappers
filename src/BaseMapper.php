@@ -189,6 +189,16 @@ abstract class BaseMapper implements IMapper
     return static::_getMetadata()->columnNames;
   }
 
+  protected static function getColumnName($field)
+  {
+    return self::_getFieldMap()[$field];
+  }
+
+  protected static function getFieldName($column)
+  {
+    return self::_getColumnMap()[$column];
+  }
+
   public function id()
   {
     $vals = $this->_getKeyValues();

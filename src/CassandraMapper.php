@@ -346,10 +346,18 @@ abstract class CassandraMapper extends BaseMapper
       if(!empty($md->identifier))
       {
         $partitionKeyFields = $md->identifier;
+        foreach($partitionKeyFields as $k => $v)
+        {
+          $partitionKeyFields[$k] = static::getColumnName($v);
+        }
       }
       if(!empty($md->table['indexes'][self::PK_INDEX_NAME]['columns']))
       {
         $primaryKeyFields = $md->table['indexes'][self::PK_INDEX_NAME]['columns'];
+        foreach($primaryKeyFields as $k => $v)
+        {
+          $primaryKeyFields[$k] = static::getColumnName($v);
+        }
       }
 
       $pkStr = '';
