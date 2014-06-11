@@ -236,9 +236,9 @@ abstract class CassandraMapper extends BaseMapper
     }*/
     // CQL Table
     $query  = sprintf(
-      "INSERT INTO %s (%s) VALUES (%s)",
+      'INSERT INTO "%s" ("%s") VALUES (%s)',
       static::getTableName(),
-      implode(', ', array_keys($changes)),
+      implode('", "', array_keys($changes)),
       implode(',', array_fill(0, count($changes), '?'))
     );
     $return = static::execute($query, $changes);
