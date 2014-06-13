@@ -156,7 +156,7 @@ abstract class CassandraMapper extends BaseMapper
    * @param null  $limit
    * @param null  $offset
    *
-   * @return static|static[]
+   * @return static[]
    */
   public static function loadWhere(
     array $criteria, $order = null, $limit = null, $offset = null
@@ -181,11 +181,24 @@ abstract class CassandraMapper extends BaseMapper
       $data[] = $obj;
     }
 
-    if(count($data) === 1)
-    {
-      return reset($data);
-    }
     return $data;
+  }
+
+  public static function loadOneWhere(
+    array $criteria, $order = null, $limit = null, $offset = null
+  )
+  {
+    $rows = self::loadWhere($criteria, $order, 2, $offset);
+    if(!$rows)
+    {
+      return null;
+    }
+    elseif(count($rows) > 1)
+    {
+      throw new \Exception('More than one record found');
+    }
+
+    return $rows[0];
   }
 
   public function save()
