@@ -68,25 +68,6 @@ abstract class CassandraMapper extends BaseMapper
     return parent::hydrate($values);
   }
 
-  /**
-   * @param $id
-   *
-   * @return static
-   */
-  public static function loadOrNew($id)
-  {
-    try
-    {
-      $mapper = static::load($id);
-    }
-    catch(\Exception $e)
-    {
-      $mapper = new static();
-      $mapper->setId($id);
-    }
-    return $mapper;
-  }
-
   public static function getData($id)
   {
     $keys = [];
@@ -184,23 +165,6 @@ abstract class CassandraMapper extends BaseMapper
     return $data;
   }
 
-  public static function loadOneWhere(
-    array $criteria, $order = null, $limit = null, $offset = null
-  )
-  {
-    $rows = self::loadWhere($criteria, $order, 2, $offset);
-    if(!$rows)
-    {
-      return null;
-    }
-    elseif(count($rows) > 1)
-    {
-      throw new \Exception('More than one record found');
-    }
-
-    return $rows[0];
-  }
-
   public function save()
   {
     if($this->exists())
@@ -284,19 +248,6 @@ abstract class CassandraMapper extends BaseMapper
     );
     $this->setExists(false);
     return $this;
-  }
-
-  public function id()
-  {
-    return $this->_getKeyValues();
-  }
-
-  public function setId($value)
-  {
-    foreach(array_combine(static::_getKeys(), (array)$value) as $k => $v)
-    {
-      $this->$k = $v;
-    }
   }
 
   public function increment($field, $count)

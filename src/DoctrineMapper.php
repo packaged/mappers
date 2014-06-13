@@ -48,7 +48,11 @@ abstract class DoctrineMapper extends BaseMapper
     else
     {
       $obj = static::getEntityManager()->find(get_called_class(), $id);
-      return $obj ? $obj->setExists(true) : new static();
+      if(!$obj)
+      {
+        throw new InvalidLoadException('No object found with that ID');
+      }
+      return $obj->setExists(true);
     }
   }
 
