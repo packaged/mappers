@@ -231,7 +231,7 @@ abstract class BaseMapper implements IMapper
     array $criteria, $order = null, $limit = null, $offset = null
   )
   {
-    $rows = self::loadWhere($criteria, $order, 2, $offset);
+    $rows = static::loadWhere($criteria, $order, 2, $offset);
     if(!$rows)
     {
       return null;
