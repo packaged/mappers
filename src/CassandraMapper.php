@@ -75,6 +75,17 @@ abstract class CassandraMapper extends BaseMapper
     {
       $keys[] = '"' . $k . '" = ?';
     }
+    $md = static::_getMetadata();
+    if(!empty($md->table['indexes'][self::PK_INDEX_NAME]['columns']))
+    {
+      $clusterKey = $md->table['indexes'][self::PK_INDEX_NAME]['columns'];
+      $k          = reset($clusterKey);
+      while(count($keys) < count($id) && $k)
+      {
+        $keys[] = '"' . $k . '" = ?';
+        $k      = next($clusterKey);
+      }
+    }
 
     $result = self::execute(
       'SELECT * FROM ' . static::getTableName()
