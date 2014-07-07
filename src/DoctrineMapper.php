@@ -143,6 +143,8 @@ abstract class DoctrineMapper extends BaseMapper
   {
     static::getEntityManager()->remove($this);
     static::getEntityManager()->flush($this);
+    $this->setExists(false);
+    return $this;
   }
 
   protected static function _getMetadata()
