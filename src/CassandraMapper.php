@@ -160,8 +160,10 @@ abstract class CassandraMapper extends BaseMapper
       $whereArray[] = '"' . $k . '" = ?';
     }
     $where  = $criteria ? ' WHERE ' . implode(' AND ', $whereArray) : '';
+    $orderQ = $order ? ' ORDER BY ' . implode(',', (array)$order) : '';
+    $limitQ = $limit ? ' LIMIT ' . $limit : '';
     $result = self::execute(
-      'SELECT * FROM ' . static::getTableName() . $where,
+      'SELECT * FROM ' . static::getTableName() . $where . $orderQ . $limitQ,
       $criteria
     );
 
