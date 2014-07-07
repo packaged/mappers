@@ -285,6 +285,17 @@ abstract class CassandraMapper extends BaseMapper
     );
   }
 
+  protected static function _getKeys()
+  {
+    $keys = parent::_getKeys();
+
+    $md        = static::_getMetadata();
+    $keyFields = isset($md->table['indexes'][self::PK_INDEX_NAME]['columns'])
+      ? $md->table['indexes'][self::PK_INDEX_NAME]['columns'] : [];
+
+    return array_merge($keys, $keyFields);
+  }
+
   public static function createTable()
   {
     $table = static::getTableName();
