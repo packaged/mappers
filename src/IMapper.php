@@ -33,10 +33,21 @@ interface IMapper
 
   public function save();
 
+  /**
+   * @param $newKey
+   *
+   * @return $this
+   */
   public function saveAsNew($newKey = null);
 
+  /**
+   * @return $this
+   */
   public function reload();
 
+  /**
+   * @return $this
+   */
   public function delete();
 
   public function id();
