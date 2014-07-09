@@ -45,6 +45,8 @@ class ThriftConnection implements IConnection
   protected $_processingBatch = false;
   protected $_batchMutation = null;
 
+  protected $_keyspace = null;
+
   /**
    * @var ThriftCQLPreparedStatement[]
    */
@@ -202,12 +204,18 @@ class ThriftConnection implements IConnection
     try
     {
       $this->client()->set_keyspace($keyspace);
+      $this->_keyspace = $keyspace;
     }
     catch(InvalidRequestException $e)
     {
       throw new \Exception("The keyspace `$keyspace` could not be found", 404);
     }
     return $this;
+  }
+
+  public function getKeyspace()
+  {
+    return $this->_keyspace;
   }
 
   public function socket()
