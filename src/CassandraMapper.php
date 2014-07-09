@@ -295,6 +295,11 @@ abstract class CassandraMapper extends BaseMapper
     $keyFields = isset($md->table['indexes'][self::PK_INDEX_NAME]['columns'])
       ? $md->table['indexes'][self::PK_INDEX_NAME]['columns'] : [];
 
+    foreach($keyFields as $k => $field)
+    {
+      $keyFields[$k] = $md->columnNames[$field];
+    }
+
     return array_merge($keys, $keyFields);
   }
 
@@ -305,11 +310,6 @@ abstract class CassandraMapper extends BaseMapper
     $md        = static::_getMetadata();
     $keyFields = isset($md->table['indexes'][self::PK_INDEX_NAME]['columns'])
       ? $md->table['indexes'][self::PK_INDEX_NAME]['columns'] : [];
-
-    foreach($keyFields as $k => $field)
-    {
-      $keyFields[$k] = $md->fieldNames[$field];
-    }
 
     return array_merge($keys, $keyFields);
   }
