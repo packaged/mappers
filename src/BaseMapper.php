@@ -256,21 +256,26 @@ abstract class BaseMapper implements IMapper
 
   public function setId($value)
   {
-    foreach(array_combine(static::_getKeys(), (array)$value) as $k => $v)
+    foreach(array_combine(static::_getKeyColumns(), (array)$value) as $k => $v)
     {
       $this->$k = $v;
     }
   }
 
-  protected static function _getKeys()
+  protected static function _getKeyColumns()
   {
     return static::_getMetadata()->getIdentifierColumnNames();
+  }
+
+  protected static function _getKeyFields()
+  {
+    return static::_getMetadata()->getIdentifierFieldNames();
   }
 
   protected function _getKeyValues()
   {
     $values = [];
-    foreach(static::_getKeys() as $key)
+    foreach(static::_getKeyColumns() as $key)
     {
       $values[$key] = $this->$key;
     }

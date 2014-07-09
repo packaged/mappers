@@ -126,7 +126,7 @@ abstract class DoctrineMapper extends BaseMapper
 
     if(!$this->isCompositeId())
     {
-      $keys = $this->_getKeys();
+      $keys = $this->_getKeyColumns();
       $new->hydrate([reset($keys) => $newKey]);
     }
     $new->save();

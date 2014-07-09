@@ -23,7 +23,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
   {
     $column = static::_getFieldMap()[$field];
     $keys   = [];
-    foreach(self::_getKeys() as $k)
+    foreach(self::_getKeyColumns() as $k)
     {
       $keys[] = '"' . $k . '" = ?';
     }
@@ -40,7 +40,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
   {
     $column = static::_getFieldMap()[$field];
     $keys   = [];
-    foreach(self::_getKeys() as $k)
+    foreach(self::_getKeyColumns() as $k)
     {
       $keys[] = '"' . $k . '" = ?';
     }

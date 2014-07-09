@@ -71,7 +71,7 @@ abstract class CassandraMapper extends BaseMapper
   public static function getData($id)
   {
     $keys = [];
-    foreach(self::_getKeys() as $k)
+    foreach(self::_getKeyColumns() as $k)
     {
       $keys[] = '"' . $k . '" = ?';
     }
@@ -250,7 +250,7 @@ abstract class CassandraMapper extends BaseMapper
   public function delete()
   {
     $keys = [];
-    foreach(self::_getKeys() as $k)
+    foreach(self::_getKeyColumns() as $k)
     {
       $keys[] = '"' . $k . '" = ?';
     }
@@ -287,9 +287,9 @@ abstract class CassandraMapper extends BaseMapper
     );
   }
 
-  protected static function _getKeys()
+  protected static function _getKeyColumns()
   {
-    $keys = parent::_getKeys();
+    $keys = parent::_getKeyColumns();
 
     $md        = static::_getMetadata();
     $keyFields = isset($md->table['indexes'][self::PK_INDEX_NAME]['columns'])
