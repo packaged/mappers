@@ -47,7 +47,15 @@ abstract class DoctrineMapper extends BaseMapper
     }
     else
     {
-      $obj = static::getEntityManager()->find(get_called_class(), $id);
+      if(is_array($id) && isset($id[0]))
+      {
+        $idArray = array_combine(static::_getKeyFields(), (array)$id);
+      }
+      else
+      {
+        $idArray = $id;
+      }
+      $obj = static::getEntityManager()->find(get_called_class(), $idArray);
       if(!$obj)
       {
         throw new InvalidLoadException('No object found with that ID');
