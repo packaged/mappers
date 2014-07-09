@@ -205,7 +205,6 @@ abstract class DoctrineMapper extends BaseMapper
     $em      = static::getEntityManager();
     $tool    = new SchemaTool($em);
     $classes = [$em->getClassMetadata(get_called_class())];
-    $tool->dropSchema($classes);
-    $tool->createSchema($classes);
+    $tool->updateSchema($classes, true);
   }
 }
