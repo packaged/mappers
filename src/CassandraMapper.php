@@ -300,9 +300,10 @@ abstract class CassandraMapper extends BaseMapper
 
   public static function createTable()
   {
-    $table = static::getTableName();
+    $table    = static::getTableName();
+    $keyspace = static::getConnection()->getKeyspace();
     if(!static::execute(
-      'SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'Cubex\' AND columnfamily_name = \'' . $table . '\';'
+      'SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'' . $keyspace . '\' AND columnfamily_name = \'' . $table . '\';'
     )
     )
     {
