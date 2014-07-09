@@ -298,6 +298,22 @@ abstract class CassandraMapper extends BaseMapper
     return array_merge($keys, $keyFields);
   }
 
+  protected static function _getKeyFields()
+  {
+    $keys = parent::_getKeyFields();
+
+    $md        = static::_getMetadata();
+    $keyFields = isset($md->table['indexes'][self::PK_INDEX_NAME]['columns'])
+      ? $md->table['indexes'][self::PK_INDEX_NAME]['columns'] : [];
+
+    foreach($keyFields as $k => $field)
+    {
+      $keyFields[$k] = $md->fieldNames[$field];
+    }
+
+    return array_merge($keys, $keyFields);
+  }
+
   public static function createTable()
   {
     $table    = static::getTableName();
