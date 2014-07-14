@@ -151,7 +151,10 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
     $newUser = $user->saveAsNew();
     $user->getEntityManager()->detach($user);
     $newUser->getEntityManager()->detach($newUser);
-    $this->compareObjects(User::loadWhere(['description'=>$uniqueDescription]), [$user, $newUser]);
+    $this->compareObjects(
+      User::loadWhere(['description' => $uniqueDescription]),
+      [$user, $newUser]
+    );
 
     $user->name = 'name' . rand() . time();
     $user->save();
@@ -183,9 +186,11 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
 
     $user->delete();
 
-    $deleted = User::load($id);
-    $this->assertFalse($deleted->exists());
-    $this->compareObjects($deleted, new User());
+    $this->setExpectedException(
+      'Packaged\Mappers\Exceptions\InvalidLoadException',
+      'No object found with that ID'
+    );
+    User::load($id);
   }
 
   public function testValidationFailure()
