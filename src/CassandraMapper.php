@@ -56,12 +56,11 @@ abstract class CassandraMapper extends BaseMapper
   {
     foreach(static::_getMetadata()->fieldMappings as $map)
     {
-      if(self::_mustPack($map)
-        && isset($values[$map['columnName']]) && $values[$map['columnName']]
-      )
+      if(isset($values[$map['columnName']]))
       {
-        $values[$map['columnName']] = self::_unpack(
-          $values[$map['columnName']]
+        $values[$map['columnName']] = static::_unpack(
+          $values[$map['columnName']],
+          static::_getCqlFieldType($map)
         );
       }
     }
@@ -195,8 +194,10 @@ abstract class CassandraMapper extends BaseMapper
     {
       $column           = $map['columnName'];
       $field            = $map['fieldName'];
-      $changes[$column] = self::_mustPack($map)
-        ? self::_pack($this->$field) : $this->$field;
+      $changes[$column] = self::_pack(
+        $this->$field,
+        static::_getCqlFieldType($map)
+      );
     }
 
     /*if(static::UseWideRows())
@@ -384,29 +385,41 @@ abstract class CassandraMapper extends BaseMapper
     }
   }
 
-  private static $_cqlTypes = [
-    'smallint'  => 'int',
-    'integer'   => 'int',
-    'bigint'    => 'bigint',
-    'decimal'   => 'decimal',
-    'float'     => 'float',
-    'string'    => 'varchar',
-    'text'      => 'varchar',
-    'guid'      => 'uuid',
-    'binary'    => 'blob',
-    'blob'      => 'blob',
-    'boolean'   => 'boolean',
-    'date'      => 'timestamp',
-    'datetime'  => 'timestamp',
-    'datetimez' => 'timestamp',
-    'time'      => 'timestamp',
-  ];
+  const TYPE_INTEGER = 'int';
+  const TYPE_BIGINT = 'bigint';
+  const TYPE_COUNTER = 'bigint';
+  const TYPE_DECIMAL = 'decimal';
+  const TYPE_DOUBLE = 'double';
+  const TYPE_FLOAT = 'float';
+  const TYPE_VARCHAR = 'varchar';
+  const TYPE_UUID = 'uuid';
+  const TYPE_BLOB = 'blob';
+  const TYPE_BOOLEAN = 'boolean';
+  const TYPE_TIMESTAMP = 'timestamp';
 
-  private static $_cqlPackTypes = ['int', 'bigint', 'timestamp', 'counter'];
+  private static $_cqlTypes = [
+    'smallint'  => self::TYPE_INTEGER,
+    'integer'   => self::TYPE_INTEGER,
+    'bigint'    => self::TYPE_BIGINT,
+    'counter'   => self::TYPE_COUNTER,
+    'decimal'   => self::TYPE_DECIMAL,
+    'double'    => self::TYPE_DOUBLE,
+    'float'     => self::TYPE_FLOAT,
+    'string'    => self::TYPE_VARCHAR,
+    'text'      => self::TYPE_VARCHAR,
+    'guid'      => self::TYPE_UUID,
+    'binary'    => self::TYPE_BLOB,
+    'blob'      => self::TYPE_BLOB,
+    'boolean'   => self::TYPE_BOOLEAN,
+    'date'      => self::TYPE_TIMESTAMP,
+    'datetime'  => self::TYPE_TIMESTAMP,
+    'datetimez' => self::TYPE_TIMESTAMP,
+    'time'      => self::TYPE_TIMESTAMP,
+  ];
 
   protected static function _getCqlField($map)
   {
-    return self::_escapeIdentifier($map['columnName']) . ' '
+    return static::_escapeIdentifier($map['columnName']) . ' '
     . static::_getCqlFieldType($map);
   }
 
@@ -438,15 +451,54 @@ abstract class CassandraMapper extends BaseMapper
     return implode($separator, $escapedCols);
   }
 
-  protected static function _mustPack($map)
+  protected static function _pack($value, $type)
   {
-    return array_search(
-      static::_getCqlFieldType($map),
-      self::$_cqlPackTypes
-    ) !== false;
+    if($value)
+    {
+      switch($type)
+      {
+        case self::TYPE_INTEGER:
+          return pack('N', $value);
+        case self::TYPE_BIGINT:
+        case self::TYPE_TIMESTAMP:
+          return self::_packLong($value);
+        case self::TYPE_DOUBLE:
+        case self::TYPE_DECIMAL:
+          return strrev(pack('d', $value));
+        case self::TYPE_FLOAT:
+          return strrev(pack('f', $value));
+        default:
+          return $value;
+      }
+    }
+    return $value;
   }
 
-  protected static function _pack($value)
+  protected static function _unpack($data, $type)
+  {
+    if($data)
+    {
+      switch($type)
+      {
+        case self::TYPE_INTEGER:
+          return pack('N', $data);
+        case self::TYPE_BIGINT:
+        case self::TYPE_TIMESTAMP:
+        case self::TYPE_COUNTER:
+          return self::_unpackLong($data);
+        case self::TYPE_DOUBLE:
+        case self::TYPE_DECIMAL:
+          return current(unpack('d', strrev($data)));
+        case self::TYPE_FLOAT:
+          return current(unpack('f', strrev($data)));
+        default:
+          return $data;
+      }
+    }
+    return $data;
+  }
+
+  protected static function _packLong($value)
   {
     // If we are on a 32bit architecture we have to explicitly deal with
     // 64-bit twos-complement arithmetic since PHP wants to treat all ints
@@ -488,7 +540,7 @@ abstract class CassandraMapper extends BaseMapper
     return $data;
   }
 
-  protected static function _unpack($data)
+  protected static function _unpackLong($data)
   {
     $arr = unpack('N2', $data);
 
