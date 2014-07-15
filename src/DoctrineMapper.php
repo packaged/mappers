@@ -149,9 +149,12 @@ abstract class DoctrineMapper extends BaseMapper
 
   public function delete()
   {
-    static::getEntityManager()->remove($this);
-    static::getEntityManager()->flush($this);
-    $this->setExists(false);
+    if($this->exists())
+    {
+      static::getEntityManager()->remove($this);
+      static::getEntityManager()->flush($this);
+      $this->setExists(false);
+    }
     return $this;
   }
 

@@ -250,17 +250,20 @@ abstract class CassandraMapper extends BaseMapper
 
   public function delete()
   {
-    $keys = [];
-    foreach(self::_getKeyColumns() as $k)
+    if($this->exists())
     {
-      $keys[] = '"' . $k . '" = ?';
+      $keys = [];
+      foreach(self::_getKeyColumns() as $k)
+      {
+        $keys[] = '"' . $k . '" = ?';
+      }
+      self::execute(
+        'DELETE FROM ' . static::getTableName()
+        . ' WHERE ' . implode(' AND ', $keys),
+        (array)$this->id()
+      );
+      $this->setExists(false);
     }
-    self::execute(
-      'DELETE FROM ' . static::getTableName()
-      . ' WHERE ' . implode(' AND ', $keys),
-      (array)$this->id()
-    );
-    $this->setExists(false);
     return $this;
   }
 
