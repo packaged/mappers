@@ -1,10 +1,4 @@
 <?php
-use cassandra\Cassandra_multiget_count_args;
-use Doctrine\ORM\Configuration;
-use Doctrine\ORM\Mapping\ClassMetadata;
-use Packaged\Mappers\CassandraMapper;
-use Packaged\Mappers\Mapping\AutoMappingDriver;
-use Packaged\Mappers\Mapping\ChainedDriver;
 
 /**
  * Created by PhpStorm.
@@ -280,7 +274,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     KeyedUser::createTable();
 
     $keyspace = 'Cubex';
-    $cfName = 'keyed_users';
+    $cfName   = 'keyed_users';
 
     $keys = KeyedUser::execute(
       'SELECT column_aliases, key_aliases '
