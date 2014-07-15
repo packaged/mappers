@@ -200,33 +200,19 @@ abstract class CassandraMapper extends BaseMapper
       );
     }
 
-    /*if(static::UseWideRows())
-    {
-      // Column Family
-      $key   = $this->id();
-      $query = 'BEGIN BATCH' . "\n";
-      $args  = [];
-      foreach($changes as $k => $v)
-      {
-        $query .= 'INSERT INTO ' . static::getTableName()
-          . ' (key,column1,value) VALUES (?,?,?)' . "\n";
-        $args[] = $key;
-        $args[] = $k;
-        $args[] = $v;
-      }
-      $query .= 'APPLY BATCH;';
-      $return = static::execute($query, $args);
-    }*/
     // CQL Table
-    $query  = sprintf(
-      'INSERT INTO "%s" ("%s") VALUES (%s)',
-      static::getTableName(),
-      implode('", "', array_keys($changes)),
-      implode(',', array_fill(0, count($changes), '?'))
-    );
-    $return = static::execute($query, $changes);
-    $this->setExists(true);
-    return $return;
+    if(count($changes) > 0)
+    {
+      $query  = sprintf(
+        'INSERT INTO "%s" ("%s") VALUES (%s)',
+        static::getTableName(),
+        implode('", "', array_keys($changes)),
+        implode(',', array_fill(0, count($changes), '?'))
+      );
+      static::execute($query, $changes);
+      $this->setExists(true);
+    }
+    return $this;
   }
 
   public function saveAsNew($newKey = null)

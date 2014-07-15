@@ -92,6 +92,7 @@ abstract class DoctrineMapper extends BaseMapper
     $em->persist($this);
     $em->flush();
     $this->setExists(true);
+    return $this;
   }
 
   /**

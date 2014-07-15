@@ -31,6 +31,9 @@ interface IMapper
     array $criteria, $order = null, $limit = null, $offset = null
   );
 
+  /**
+   * @return $this
+   */
   public function save();
 
   /**
