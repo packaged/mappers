@@ -21,18 +21,18 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/CounterTest.php';
     require_once __DIR__ . '/KeyedUser.php';
 
-    $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
-    $stmt = $cassDb->prepare(
-      'SELECT * FROM system.schema_keyspaces where keyspace_name = \'Cubex\''
+    $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost.dev']);
+    $stmt   = $cassDb->prepare(
+      'SELECT * FROM system.schema_keyspaces where keyspace_name = \'test_cassandra_mapper\''
     );
     if(!$cassDb->execute($stmt))
     {
       $stmt = $cassDb->prepare(
-        'CREATE KEYSPACE "Cubex" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':1};'
+        'CREATE KEYSPACE "test_cassandra_mapper" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':1};'
       );
       $cassDb->execute($stmt);
     }
-    $cassDb->setKeyspace('Cubex');
+    $cassDb->setKeyspace('test_cassandra_mapper');
 
     $resolver = new \Packaged\Mappers\ConnectionResolver();
     $resolver->addConnection('cassdb', $cassDb);
@@ -42,6 +42,15 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     CassUser::createTable();
     CassPerson::createTable();
     CounterTest::createTable();
+  }
+
+  public static function tearDownAfterClass()
+  {
+    $resolver = \Packaged\Mappers\BaseMapper::getConnectionResolver();
+    $cassDb   = $resolver->getConnection('cassdb');
+
+    $stmt = $cassDb->prepare('DROP KEYSPACE "test_cassandra_mapper"');
+    $stmt->execute();
   }
 
   /**
