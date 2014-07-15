@@ -15,7 +15,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/CounterTest.php';
     require_once __DIR__ . '/KeyedUser.php';
 
-    $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost.dev']);
+    $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
     $stmt   = $cassDb->prepare(
       'SELECT * FROM system.schema_keyspaces where keyspace_name = \'test_cassandra_mapper\''
     );
