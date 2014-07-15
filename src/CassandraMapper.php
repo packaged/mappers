@@ -87,7 +87,7 @@ abstract class CassandraMapper extends BaseMapper
     }
 
     $result = self::execute(
-      'SELECT * FROM ' . static::getTableName()
+      'SELECT * FROM "' . static::getTableName() . '"'
       . ' WHERE ' . implode(' AND ', $keys),
       (array)$id
     );
