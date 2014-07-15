@@ -275,9 +275,11 @@ abstract class BaseMapper implements IMapper
   protected function _getKeyValues()
   {
     $values = [];
-    foreach(static::_getKeyColumns() as $key)
+
+    foreach(static::_getKeyColumns() as $column)
     {
-      $values[$key] = $this->$key;
+      $field           = static::getFieldName($column);
+      $values[$column] = $this->$field;
     }
     return $values;
   }
