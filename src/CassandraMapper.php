@@ -87,7 +87,7 @@ abstract class CassandraMapper extends BaseMapper
     }
 
     $result = self::execute(
-      'SELECT * FROM "' . static::getTableName() . '"'
+      'SELECT * FROM ' . self::_escapeIdentifier(static::getTableName())
       . ' WHERE ' . implode(' AND ', $keys),
       (array)$id
     );
@@ -162,7 +162,8 @@ abstract class CassandraMapper extends BaseMapper
     $orderQ = $order ? ' ORDER BY ' . implode(',', (array)$order) : '';
     $limitQ = $limit ? ' LIMIT ' . $limit : '';
     $result = self::execute(
-      'SELECT * FROM ' . static::getTableName() . $where . $orderQ . $limitQ,
+      'SELECT * FROM ' . self::_escapeIdentifier(static::getTableName())
+      . $where . $orderQ . $limitQ,
       $criteria
     );
 
@@ -204,8 +205,8 @@ abstract class CassandraMapper extends BaseMapper
     if(count($changes) > 0)
     {
       $query  = sprintf(
-        'INSERT INTO "%s" ("%s") VALUES (%s)',
-        static::getTableName(),
+        'INSERT INTO %s ("%s") VALUES (%s)',
+        self::_escapeIdentifier(static::getTableName()),
         implode('", "', array_keys($changes)),
         implode(',', array_fill(0, count($changes), '?'))
       );
@@ -244,7 +245,7 @@ abstract class CassandraMapper extends BaseMapper
         $keys[] = '"' . $k . '" = ?';
       }
       self::execute(
-        'DELETE FROM ' . static::getTableName()
+        'DELETE FROM ' . self::_escapeIdentifier(static::getTableName())
         . ' WHERE ' . implode(' AND ', $keys),
         (array)$this->id()
       );
@@ -309,7 +310,9 @@ abstract class CassandraMapper extends BaseMapper
     $table    = static::getTableName();
     $keyspace = static::getConnection()->getKeyspace();
     if(!static::execute(
-      'SELECT * FROM system.schema_columnfamilies WHERE keyspace_name = \'' . $keyspace . '\' AND columnfamily_name = \'' . $table . '\';'
+      'SELECT * FROM system.schema_columnfamilies WHERE'
+      . ' keyspace_name = \'' . $keyspace . '\''
+      . ' AND columnfamily_name = \'' . $table . '\';'
     )
     )
     {
