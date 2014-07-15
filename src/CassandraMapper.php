@@ -458,6 +458,24 @@ abstract class CassandraMapper extends BaseMapper
     return implode($separator, $escapedCols);
   }
 
+  /**
+   * Reverse the supplied string's bytes if the current platform is
+   * little-endian
+   *
+   * @param string &$bin
+   *
+   * @return string
+   */
+  private static function _reverseIfLE($bin)
+  {
+    static $isBigEndian = null;
+    if($isBigEndian === null)
+    {
+      $isBigEndian = unpack('v', pack('S', 256)) == 256;
+    }
+    return $isBigEndian ? strrev($bin) : $bin;
+  }
+
   protected static function _pack($value, $type)
   {
     if($value)
@@ -472,9 +490,9 @@ abstract class CassandraMapper extends BaseMapper
           return self::_packLong($value);
         case self::TYPE_DOUBLE:
         case self::TYPE_DECIMAL:
-          return strrev(pack('d', $value));
+          return self::_reverseIfLE(pack('d', $value));
         case self::TYPE_FLOAT:
-          return strrev(pack('f', $value));
+          return self::_reverseIfLE(pack('f', $value));
         default:
           return $value;
       }
@@ -489,16 +507,16 @@ abstract class CassandraMapper extends BaseMapper
       switch($type)
       {
         case self::TYPE_INTEGER:
-          return current(unpack('l', strrev($data)));
+          return current(unpack('l', self::_reverseIfLE($data)));
         case self::TYPE_BIGINT:
         case self::TYPE_TIMESTAMP:
         case self::TYPE_COUNTER:
           return self::_unpackLong($data);
         case self::TYPE_DOUBLE:
         case self::TYPE_DECIMAL:
-          return current(unpack('d', strrev($data)));
+          return current(unpack('d', self::_reverseIfLE($data)));
         case self::TYPE_FLOAT:
-          return current(unpack('f', strrev($data)));
+          return current(unpack('f', self::_reverseIfLE($data)));
         default:
           return $data;
       }
