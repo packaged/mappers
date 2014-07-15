@@ -273,7 +273,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
   {
     KeyedUser::createTable();
 
-    $keyspace = 'Cubex';
+    $keyspace = 'test_cassandra_mapper';
     $cfName   = 'keyed_users';
 
     $keys = KeyedUser::execute(
