@@ -387,7 +387,7 @@ abstract class CassandraMapper extends BaseMapper
 
   const TYPE_INTEGER = 'int';
   const TYPE_BIGINT = 'bigint';
-  const TYPE_COUNTER = 'bigint';
+  const TYPE_COUNTER = 'counter';
   const TYPE_DECIMAL = 'decimal';
   const TYPE_DOUBLE = 'double';
   const TYPE_FLOAT = 'float';
@@ -461,6 +461,7 @@ abstract class CassandraMapper extends BaseMapper
           return pack('N', $value);
         case self::TYPE_BIGINT:
         case self::TYPE_TIMESTAMP:
+        case self::TYPE_COUNTER:
           return self::_packLong($value);
         case self::TYPE_DOUBLE:
         case self::TYPE_DECIMAL:
