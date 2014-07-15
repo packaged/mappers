@@ -471,7 +471,7 @@ abstract class CassandraMapper extends BaseMapper
       switch($type)
       {
         case self::TYPE_INTEGER:
-          return pack('N', $data);
+          return current(unpack('l', strrev($data)));
         case self::TYPE_BIGINT:
         case self::TYPE_TIMESTAMP:
         case self::TYPE_COUNTER:
