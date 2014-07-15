@@ -301,6 +301,17 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
       [$keyspace, $cfName]
     );
 
+    // remove rows returned by cassandra > 2.0
+    $keyFields = ['email', 'username', 'brandId', 'userId'];
+    foreach($cols as $k => $v)
+    {
+      if(in_array($v['column_name'], $keyFields) !== false)
+      {
+        unset($cols[$k]);
+      }
+    }
+    $cols = array_values($cols);
+
     $this->assertEquals(
       [
         ['column_name' => 'created_at'],
