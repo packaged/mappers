@@ -154,9 +154,24 @@ abstract class CassandraMapper extends BaseMapper
   )
   {
     $whereArray = [];
+    $params = [];
     foreach($criteria as $k => $v)
     {
-      $whereArray[] = '"' . $k . '" = ?';
+      if(is_array($v))
+      {
+        $numValues = count($v);
+        if($numValues > 0)
+        {
+          $whereArray[] = '"' . $k . '" IN ('
+            . implode(",", array_fill(0, $numValues, '?')) . ')';
+          $params = array_merge($params, $v);
+        }
+      }
+      else
+      {
+        $whereArray[] = '"' . $k . '" = ?';
+        $params[] = $v;
+      }
     }
     $where  = $criteria ? ' WHERE ' . implode(' AND ', $whereArray) : '';
     $orderQ = $order ? ' ORDER BY ' . implode(',', (array)$order) : '';
@@ -164,7 +179,7 @@ abstract class CassandraMapper extends BaseMapper
     $result = self::execute(
       'SELECT * FROM ' . self::_escapeIdentifier(static::getTableName())
       . $where . $orderQ . $limitQ,
-      $criteria
+      $params
     );
 
     $data = [];
