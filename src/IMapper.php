@@ -60,6 +60,11 @@ interface IMapper
 
   public function id();
 
+  /**
+   * @return bool
+   */
+  public function exists();
+
   public function increment($field, $count);
 
   public function decrement($field, $count);
