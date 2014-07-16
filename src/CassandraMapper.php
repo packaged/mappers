@@ -153,6 +153,50 @@ abstract class CassandraMapper extends BaseMapper
     array $criteria, $order = null, $limit = null, $offset = null
   )
   {
+    $where = self::_buildWhere($criteria);
+
+    $orderQ = $order ? ' ORDER BY ' . implode(',', (array)$order) : '';
+    $limitQ = $limit ? ' LIMIT ' . $limit : '';
+    $result = self::execute(
+      'SELECT * FROM ' . self::_escapeIdentifier(static::getTableName())
+      . $where['where'] . $orderQ . $limitQ,
+      $where['params']
+    );
+
+    $data = [];
+    foreach($result as $row)
+    {
+      $obj = new static();
+      $obj->hydrate($row);
+      $data[] = $obj;
+    }
+
+    return $data;
+  }
+
+  public static function deleteWhere(array $criteria)
+  {
+    $where = self::_buildWhere($criteria);
+    if(($where['where'] == '') || (count($criteria) == 0))
+    {
+      throw new \Exception('Invalid or empty criteria specified');
+    }
+
+    self::execute(
+      'DELETE FROM ' . self::_escapeIdentifier(static::getTableName())
+      . $where['where'],
+      $where['params']
+    );
+  }
+
+  /**
+   * @param array $criteria
+   *
+   * @return array('where' => string, 'params' => array)
+   */
+  private static function _buildWhere(array $criteria)
+  {
+    $whereStr = '';
     $whereArray = [];
     $params = [];
     foreach($criteria as $k => $v)
@@ -173,24 +217,11 @@ abstract class CassandraMapper extends BaseMapper
         $params[] = $v;
       }
     }
-    $where  = $criteria ? ' WHERE ' . implode(' AND ', $whereArray) : '';
-    $orderQ = $order ? ' ORDER BY ' . implode(',', (array)$order) : '';
-    $limitQ = $limit ? ' LIMIT ' . $limit : '';
-    $result = self::execute(
-      'SELECT * FROM ' . self::_escapeIdentifier(static::getTableName())
-      . $where . $orderQ . $limitQ,
-      $params
-    );
-
-    $data = [];
-    foreach($result as $row)
+    if(count($whereArray) > 0)
     {
-      $obj = new static();
-      $obj->hydrate($row);
-      $data[] = $obj;
+      $whereStr = ' WHERE ' . implode(' AND ', $whereArray);
     }
-
-    return $data;
+    return ['where' => $whereStr, 'params' => $params];
   }
 
   public function save()

@@ -32,6 +32,11 @@ interface IMapper
   );
 
   /**
+   * @param array $criteria
+   */
+  public static function deleteWhere(array $criteria);
+
+  /**
    * @return $this
    */
   public function save();

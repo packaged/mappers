@@ -80,6 +80,16 @@ abstract class DoctrineMapper extends BaseMapper
       ->findBy($criteria, $order, $limit, $offset);
   }
 
+  /**
+   * @param array $criteria
+   *
+   * @throws \Exception
+   */
+  public static function deleteWhere(array $criteria)
+  {
+    throw new \Exception('Not yet implemented');
+  }
+
   public static function loadFromMaster($id = null)
   {
     //TODO: use Master EntityManager
