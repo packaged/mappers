@@ -509,7 +509,7 @@ abstract class CassandraMapper extends BaseMapper
 
   protected static function _pack($value, $type)
   {
-    if($value)
+    if($value !== null && $value !== '')
     {
       switch($type)
       {
