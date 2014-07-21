@@ -96,7 +96,7 @@ class ClusteredConnection implements IConnection
       }
     }
 
-    if($connection)
+    if(!$connection)
     {
       throw new \Exception('No server available in mode (' . $mode . ')');
     }
