@@ -423,36 +423,36 @@ abstract class CassandraMapper extends BaseMapper
     }
   }
 
-  const TYPE_INTEGER = 'int';
-  const TYPE_BIGINT = 'bigint';
-  const TYPE_COUNTER = 'counter';
-  const TYPE_DECIMAL = 'decimal';
-  const TYPE_DOUBLE = 'double';
-  const TYPE_FLOAT = 'float';
-  const TYPE_VARCHAR = 'varchar';
-  const TYPE_UUID = 'uuid';
-  const TYPE_BLOB = 'blob';
-  const TYPE_BOOLEAN = 'boolean';
-  const TYPE_TIMESTAMP = 'timestamp';
+  const CASSANDRA_TYPE_INTEGER = 'int';
+  const CASSANDRA_TYPE_BIGINT = 'bigint';
+  const CASSANDRA_TYPE_COUNTER = 'counter';
+  const CASSANDRA_TYPE_DECIMAL = 'decimal';
+  const CASSANDRA_TYPE_DOUBLE = 'double';
+  const CASSANDRA_TYPE_FLOAT = 'float';
+  const CASSANDRA_TYPE_VARCHAR = 'varchar';
+  const CASSANDRA_TYPE_UUID = 'uuid';
+  const CASSANDRA_TYPE_BLOB = 'blob';
+  const CASSANDRA_TYPE_BOOLEAN = 'boolean';
+  const CASSANDRA_TYPE_TIMESTAMP = 'timestamp';
 
   private static $_cqlTypes = [
-    'smallint'  => self::TYPE_INTEGER,
-    'integer'   => self::TYPE_INTEGER,
-    'bigint'    => self::TYPE_BIGINT,
-    'counter'   => self::TYPE_COUNTER,
-    'decimal'   => self::TYPE_DECIMAL,
-    'double'    => self::TYPE_DOUBLE,
-    'float'     => self::TYPE_FLOAT,
-    'string'    => self::TYPE_VARCHAR,
-    'text'      => self::TYPE_VARCHAR,
-    'guid'      => self::TYPE_UUID,
-    'binary'    => self::TYPE_BLOB,
-    'blob'      => self::TYPE_BLOB,
-    'boolean'   => self::TYPE_BOOLEAN,
-    'date'      => self::TYPE_TIMESTAMP,
-    'datetime'  => self::TYPE_TIMESTAMP,
-    'datetimez' => self::TYPE_TIMESTAMP,
-    'time'      => self::TYPE_TIMESTAMP,
+    'smallint'  => self::CASSANDRA_TYPE_INTEGER,
+    'integer'   => self::CASSANDRA_TYPE_INTEGER,
+    'bigint'    => self::CASSANDRA_TYPE_BIGINT,
+    'counter'   => self::CASSANDRA_TYPE_COUNTER,
+    'decimal'   => self::CASSANDRA_TYPE_DECIMAL,
+    'double'    => self::CASSANDRA_TYPE_DOUBLE,
+    'float'     => self::CASSANDRA_TYPE_FLOAT,
+    'string'    => self::CASSANDRA_TYPE_VARCHAR,
+    'text'      => self::CASSANDRA_TYPE_VARCHAR,
+    'guid'      => self::CASSANDRA_TYPE_UUID,
+    'binary'    => self::CASSANDRA_TYPE_BLOB,
+    'blob'      => self::CASSANDRA_TYPE_BLOB,
+    'boolean'   => self::CASSANDRA_TYPE_BOOLEAN,
+    'date'      => self::CASSANDRA_TYPE_TIMESTAMP,
+    'datetime'  => self::CASSANDRA_TYPE_TIMESTAMP,
+    'datetimez' => self::CASSANDRA_TYPE_TIMESTAMP,
+    'time'      => self::CASSANDRA_TYPE_TIMESTAMP,
   ];
 
   protected static function _getCqlField($map)
@@ -513,16 +513,16 @@ abstract class CassandraMapper extends BaseMapper
     {
       switch($type)
       {
-        case self::TYPE_INTEGER:
+        case self::CASSANDRA_TYPE_INTEGER:
           return pack('N', $value);
-        case self::TYPE_BIGINT:
-        case self::TYPE_TIMESTAMP:
-        case self::TYPE_COUNTER:
+        case self::CASSANDRA_TYPE_BIGINT:
+        case self::CASSANDRA_TYPE_TIMESTAMP:
+        case self::CASSANDRA_TYPE_COUNTER:
           return self::_packLong($value);
-        case self::TYPE_DOUBLE:
-        case self::TYPE_DECIMAL:
+        case self::CASSANDRA_TYPE_DOUBLE:
+        case self::CASSANDRA_TYPE_DECIMAL:
           return self::_reverseIfLE(pack('d', $value));
-        case self::TYPE_FLOAT:
+        case self::CASSANDRA_TYPE_FLOAT:
           return self::_reverseIfLE(pack('f', $value));
         default:
           return $value;
@@ -537,16 +537,16 @@ abstract class CassandraMapper extends BaseMapper
     {
       switch($type)
       {
-        case self::TYPE_INTEGER:
+        case self::CASSANDRA_TYPE_INTEGER:
           return current(unpack('l', self::_reverseIfLE($data)));
-        case self::TYPE_BIGINT:
-        case self::TYPE_TIMESTAMP:
-        case self::TYPE_COUNTER:
+        case self::CASSANDRA_TYPE_BIGINT:
+        case self::CASSANDRA_TYPE_TIMESTAMP:
+        case self::CASSANDRA_TYPE_COUNTER:
           return self::_unpackLong($data);
-        case self::TYPE_DOUBLE:
-        case self::TYPE_DECIMAL:
+        case self::CASSANDRA_TYPE_DOUBLE:
+        case self::CASSANDRA_TYPE_DECIMAL:
           return current(unpack('d', self::_reverseIfLE($data)));
-        case self::TYPE_FLOAT:
+        case self::CASSANDRA_TYPE_FLOAT:
           return current(unpack('f', self::_reverseIfLE($data)));
         default:
           return $data;

@@ -16,7 +16,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
     {
       return parent::_getCqlFieldType($map);
     }
-    return self::TYPE_COUNTER;
+    return self::CASSANDRA_TYPE_COUNTER;
   }
 
   public function increment($field, $count)
@@ -28,7 +28,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
       $keys[] = '"' . $k . '" = ?';
     }
     $values = array_merge(
-      [self::_pack($count, self::TYPE_COUNTER)],
+      [self::_pack($count, self::CASSANDRA_TYPE_COUNTER)],
       (array)$this->id()
     );
     self::execute(
@@ -48,7 +48,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
       $keys[] = '"' . $k . '" = ?';
     }
     $values = array_merge(
-      [self::_pack($count, self::TYPE_COUNTER)],
+      [self::_pack($count, self::CASSANDRA_TYPE_COUNTER)],
       (array)$this->id()
     );
     self::execute(
