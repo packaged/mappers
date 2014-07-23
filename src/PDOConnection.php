@@ -23,6 +23,6 @@ class PDOConnection extends \PDO implements IConnection
 
   public function prepare($statement, $options = null)
   {
-    return parent::prepare($statement, $options);
+    return parent::prepare($statement, (array)$options);
   }
 }
