@@ -15,10 +15,11 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/CounterTest.php';
     require_once __DIR__ . '/KeyedUser.php';
     require_once __DIR__ . '/StaticMapper.php';
+    require_once __DIR__ . '/IndexedMapper.php';
 
     $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
     $cassDb->setConnectTimeout(1000);
-    $stmt   = $cassDb->prepare(
+    $stmt = $cassDb->prepare(
       'SELECT * FROM system.schema_keyspaces where keyspace_name = \'test_cassandra_mapper\''
     );
     if(!$cassDb->execute($stmt))
@@ -355,5 +356,41 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
 
     $this->assertEquals('a different static', $row1->myStatic);
     $this->assertEquals('a different static', $row2->myStatic);
+  }
+
+  public function testIndexes()
+  {
+    IndexedMapper::createTable();
+
+    $search1 = uniqid('TEST:');
+    $search2 = uniqid('TSET:');
+
+    $test1                     = IndexedMapper::loadOrNew('test1');
+    $test1->indexedField       = $search1;
+    $test1->customIndexedField = 'not this';
+    $test1->save();
+
+    $test2                     = IndexedMapper::loadOrNew('test2');
+    $test2->indexedField       = 'not this';
+    $test2->customIndexedField = $search2;
+    $test2->save();
+
+    $this->assertEquals(
+      [],
+      IndexedMapper::loadWhere(['indexed_field' => 'fail'])
+    );
+    $this->assertEquals(
+      [$test1],
+      IndexedMapper::loadWhere(['indexed_field' => $search1])
+    );
+
+    $this->assertEquals(
+      [],
+      IndexedMapper::loadWhere(['custom_indexed_field' => 'fail'])
+    );
+    $this->assertEquals(
+      [$test2],
+      IndexedMapper::loadWhere(['custom_indexed_field' => $search2])
+    );
   }
 }

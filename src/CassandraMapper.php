@@ -8,7 +8,6 @@
 
 namespace Packaged\Mappers;
 
-use Packaged\DocBlock\DocBlockParser;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
 
@@ -240,8 +239,8 @@ abstract class CassandraMapper extends BaseMapper
     $mappings = static::_getMetadata()->fieldMappings;
     foreach($mappings as $map)
     {
-      $column           = $map['columnName'];
-      $field            = $map['fieldName'];
+      $column = $map['columnName'];
+      $field  = $map['fieldName'];
       if($this->$field)
       {
         $changes[$column] = self::_pack(
@@ -376,10 +375,7 @@ abstract class CassandraMapper extends BaseMapper
        */
       $primaryKeyFields = [];
 
-      $docBlocks = DocBlockParser::fromProperties(
-        get_called_class(),
-        \ReflectionProperty::IS_PUBLIC
-      );
+      $docBlocks = static::_getDocBlockProperties();
 
       $md      = self::_getMetadata();
       $columns = [];
@@ -430,6 +426,30 @@ abstract class CassandraMapper extends BaseMapper
         . implode(',', $columns)
         . ', PRIMARY KEY (' . $pkStr . '))';
       self::execute($query);
+    }
+
+    $docBlocks = static::_getDocBlockProperties();
+    foreach($docBlocks as $property => $block)
+    {
+      if($block->hasTag('index'))
+      {
+        try
+        {
+          // convert property to column
+          $column = static::_getFieldMap()[$property];
+          static::execute(
+            'CREATE INDEX ' . $block->getTag('index', $column)
+            . ' on ' . static::getTableName() . ' (' . $column . ')'
+          );
+        }
+        catch(\Exception $e)
+        {
+          if(strpos($e->getMessage(), 'Index already exists') !== 0)
+          {
+            throw $e;
+          }
+        }
+      }
     }
   }
 

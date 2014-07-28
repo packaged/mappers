@@ -10,6 +10,7 @@ namespace Packaged\Mappers;
 
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Packaged\DocBlock\DocBlockParser;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Mapping\AutoMappingDriver;
 use Packaged\Mappers\Mapping\ChainedDriver;
@@ -39,6 +40,8 @@ abstract class BaseMapper implements IMapper
   protected $_validators = [];
 
   protected $_validationErrors = [];
+
+  private static $_docBlockProperties;
 
   public static function getServiceName()
   {
@@ -323,6 +326,22 @@ abstract class BaseMapper implements IMapper
     }
 
     $this->_configure();
+  }
+
+  /**
+   * @return DocBlockParser[]
+   */
+  protected static function _getDocBlockProperties()
+  {
+    if(!isset(self::$_docBlockProperties[get_called_class()]))
+    {
+      self::$_docBlockProperties[get_called_class()] =
+        DocBlockParser::fromProperties(
+          get_called_class(),
+          \ReflectionProperty::IS_PUBLIC
+        );
+    }
+    return self::$_docBlockProperties[get_called_class()];
   }
 
   protected function _configure()
