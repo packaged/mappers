@@ -168,6 +168,7 @@ abstract class CassandraMapper extends BaseMapper
     {
       $obj = new static();
       $obj->hydrate($row);
+      $obj->setExists(true);
       $data[] = $obj;
     }
 
