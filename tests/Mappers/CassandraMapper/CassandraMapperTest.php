@@ -14,8 +14,10 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/Person.php';
     require_once __DIR__ . '/CounterTest.php';
     require_once __DIR__ . '/KeyedUser.php';
+    require_once __DIR__ . '/StaticMapper.php';
 
     $cassDb = new \Packaged\Mappers\ThriftConnection(['localhost']);
+    $cassDb->setConnectTimeout(1000);
     $stmt   = $cassDb->prepare(
       'SELECT * FROM system.schema_keyspaces where keyspace_name = \'test_cassandra_mapper\''
     );
@@ -322,5 +324,36 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
       $cols,
       "Non-key columns do not match"
     );
+  }
+
+  public function testStatic()
+  {
+    StaticMapper::createTable();
+    $row1            = StaticMapper::loadOrNew(['a', 'a']);
+    $row1->myStatic  = 'this is static';
+    $row1->nonStatic = 'this is not static';
+    $row1->save();
+
+    $row2            = StaticMapper::loadOrNew(['a', 'b']);
+    $row2->nonStatic = 'this also is not static';
+    $row2->save();
+
+    $row1->reload();
+    $row2->reload();
+
+    $this->assertEquals('this is static', $row1->myStatic);
+    $this->assertEquals('this is not static', $row1->nonStatic);
+
+    $this->assertEquals('this is static', $row2->myStatic);
+    $this->assertEquals('this also is not static', $row2->nonStatic);
+
+    $row2->myStatic = 'a different static';
+    $row2->save();
+
+    $row1->reload();
+    $row2->reload();
+
+    $this->assertEquals('a different static', $row1->myStatic);
+    $this->assertEquals('a different static', $row2->myStatic);
   }
 }

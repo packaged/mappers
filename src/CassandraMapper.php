@@ -8,6 +8,7 @@
 
 namespace Packaged\Mappers;
 
+use Packaged\DocBlock\DocBlockParser;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
 
@@ -196,9 +197,9 @@ abstract class CassandraMapper extends BaseMapper
    */
   private static function _buildWhere(array $criteria)
   {
-    $whereStr = '';
+    $whereStr   = '';
     $whereArray = [];
-    $params = [];
+    $params     = [];
     foreach($criteria as $k => $v)
     {
       if(is_array($v))
@@ -208,13 +209,13 @@ abstract class CassandraMapper extends BaseMapper
         {
           $whereArray[] = '"' . $k . '" IN ('
             . implode(",", array_fill(0, $numValues, '?')) . ')';
-          $params = array_merge($params, $v);
+          $params       = array_merge($params, $v);
         }
       }
       else
       {
         $whereArray[] = '"' . $k . '" = ?';
-        $params[] = $v;
+        $params[]     = $v;
       }
     }
     if(count($whereArray) > 0)
@@ -241,16 +242,19 @@ abstract class CassandraMapper extends BaseMapper
     {
       $column           = $map['columnName'];
       $field            = $map['fieldName'];
-      $changes[$column] = self::_pack(
-        $this->$field,
-        static::_getCqlFieldType($map)
-      );
+      if($this->$field)
+      {
+        $changes[$column] = self::_pack(
+          $this->$field,
+          static::_getCqlFieldType($map)
+        );
+      }
     }
 
     // CQL Table
     if(count($changes) > 0)
     {
-      $query  = sprintf(
+      $query = sprintf(
         'INSERT INTO %s ("%s") VALUES (%s)',
         self::_escapeIdentifier(static::getTableName()),
         implode('", "', array_keys($changes)),
@@ -372,11 +376,17 @@ abstract class CassandraMapper extends BaseMapper
        */
       $primaryKeyFields = [];
 
+      $docBlocks = DocBlockParser::fromProperties(
+        get_called_class(),
+        \ReflectionProperty::IS_PUBLIC
+      );
+
       $md      = self::_getMetadata();
       $columns = [];
       foreach($md->fieldMappings as $map)
       {
-        $columns[] = static::_getCqlField($map);
+        $columns[] = static::_getCqlField($map)
+          . ($docBlocks[$map['fieldName']]->hasTag('static') ? ' static' : '');
       }
 
       if(!empty($md->identifier))
