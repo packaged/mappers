@@ -46,13 +46,13 @@ abstract class CassandraMapper extends BaseMapper
         throw new InvalidLoadException('No object found with that ID');
       }
       $mapper = new static();
-      $mapper->hydrate($data);
+      $mapper->hydrate($data, true);
       $mapper->setExists(true);
       return $mapper;
     }
   }
 
-  public function hydrate(array $values)
+  public function hydrate(array $values, $persistent = false)
   {
     foreach(static::_getMetadata()->fieldMappings as $map)
     {
@@ -64,7 +64,7 @@ abstract class CassandraMapper extends BaseMapper
         );
       }
     }
-    return parent::hydrate($values);
+    return parent::hydrate($values, $persistent);
   }
 
   public static function getData($id)
@@ -167,7 +167,7 @@ abstract class CassandraMapper extends BaseMapper
     foreach($result as $row)
     {
       $obj = new static();
-      $obj->hydrate($row);
+      $obj->hydrate($row, true);
       $obj->setExists(true);
       $data[] = $obj;
     }
@@ -236,19 +236,25 @@ abstract class CassandraMapper extends BaseMapper
       $this->preCreate();
     }
 
-    $changes  = [];
-    $mappings = static::_getMetadata()->fieldMappings;
-    foreach($mappings as $map)
+    $changes       = [];
+    $changedFields = $this->getChangedFields();
+    $map           = static::_getMetadata()->fieldMappings;
+    foreach($changedFields as $field => $value)
     {
-      $column = $map['columnName'];
-      $field  = $map['fieldName'];
-      if($this->$field)
+      if($value !== null)
       {
-        $changes[$column] = self::_pack(
-          $this->$field,
-          static::_getCqlFieldType($map)
+        $changes[$map[$field]['columnName']] = self::_pack(
+          $value,
+          static::_getCqlFieldType($map[$field])
         );
       }
+    }
+    foreach(static::_getKeyFields() as $field)
+    {
+      $changes[$map[$field]['columnName']] = self::_pack(
+        $this->$field,
+        static::_getCqlFieldType($map[$field])
+      );
     }
 
     // CQL Table
@@ -262,26 +268,35 @@ abstract class CassandraMapper extends BaseMapper
       );
       static::execute($query, $changes);
       $this->setExists(true);
+
+      $changesMade = [];
+      foreach($changedFields as $field => $value)
+      {
+        $changesMade[$field]          = [
+          'from' => isset($this->_persistedData[$field])
+            ? $this->_persistedData[$field] : null,
+          'to'   => $value
+        ];
+        $this->_persistedData[$field] = $value;
+      }
+      return $changesMade;
     }
-    return $this;
+    return [];
   }
 
   public function saveAsNew($newKey = null)
   {
-    $return = new static();
-    foreach($this as $k => $v)
-    {
-      $return->$k = $v;
-    }
-    $return->setId($newKey);
-    $return->save();
-    return $return;
+    $new = new static();
+    $new->hydrate(call_user_func('get_object_vars', $this));
+    $new->setId($newKey);
+    $new->save();
+    return $new;
   }
 
   public function reload()
   {
     $data = self::getData($this->id());
-    $this->hydrate($data);
+    $this->hydrate($data, true);
     return $this;
   }
 

@@ -60,6 +60,10 @@ abstract class DoctrineMapper extends BaseMapper
       {
         throw new InvalidLoadException('No object found with that ID');
       }
+      /**
+       * @var $obj static
+       */
+      $obj->setPersistedData(call_user_func('get_object_vars', $obj));
       return $obj->setExists(true);
     }
   }
@@ -76,8 +80,18 @@ abstract class DoctrineMapper extends BaseMapper
     array $criteria, $order = null, $limit = null, $offset = null
   )
   {
-    return static::getEntityManager()->getRepository(get_called_class())
+    $entities = static::getEntityManager()->getRepository(get_called_class())
       ->findBy($criteria, $order, $limit, $offset);
+
+    foreach($entities as $entity)
+    {
+      /**
+       * @var $entity static
+       */
+      $entity->setExists(true);
+      $entity->setPersistedData(call_user_func('get_object_vars', $entity));
+    }
+    return $entities;
   }
 
   /**
@@ -102,7 +116,20 @@ abstract class DoctrineMapper extends BaseMapper
     $em->persist($this);
     $em->flush();
     $this->setExists(true);
-    return $this;
+
+    $changedFields = $this->getChangedFields();
+
+    $changesMade = [];
+    foreach($changedFields as $field => $value)
+    {
+      $changesMade[$field]          = [
+        'from' => isset($this->_persistedData[$field])
+          ? $this->_persistedData[$field] : null,
+        'to'   => $value
+      ];
+      $this->_persistedData[$field] = $value;
+    }
+    return $changesMade;
   }
 
   /**
@@ -136,18 +163,21 @@ abstract class DoctrineMapper extends BaseMapper
    */
   public function saveAsNew($newKey = null)
   {
-    // timestamps
     $new = new static();
-    foreach($this->_getColumnMap() as $field)
+
+    // hydrate new mapper with existing values
+    $new->hydrate(call_user_func('get_object_vars', $this));
+
+    // hydrate new mapper with specified keys
+    $new->setId($newKey);
+
+    // unset autoTimestamps
+    if(static::useAutoTimestamp())
     {
-      $new->$field = $this->$field;
+      $new->updatedAt = null;
+      $new->createdAt = null;
     }
 
-    if(!$this->isCompositeId())
-    {
-      $keys = $this->_getKeyColumns();
-      $new->hydrate([reset($keys) => $newKey]);
-    }
     $new->save();
     return $new;
   }

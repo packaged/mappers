@@ -12,6 +12,7 @@ use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Packaged\DocBlock\DocBlockParser;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
+use Packaged\Mappers\Exceptions\MapperException;
 use Packaged\Mappers\Mapping\AutoMappingDriver;
 use Packaged\Mappers\Mapping\ChainedDriver;
 use Respect\Validation\Validator;
@@ -42,6 +43,8 @@ abstract class BaseMapper implements IMapper
   protected $_validationErrors = [];
 
   private static $_docBlockProperties;
+
+  protected $_persistedData;
 
   public static function getServiceName()
   {
@@ -259,6 +262,10 @@ abstract class BaseMapper implements IMapper
 
   public function setId($value)
   {
+    if(!is_array($value))
+    {
+      $value = [$value];
+    }
     foreach(array_combine(static::_getKeyFields(), (array)$value) as $k => $v)
     {
       $this->$k = $v;
@@ -361,14 +368,79 @@ abstract class BaseMapper implements IMapper
     return static::$_resolver;
   }
 
-  public function hydrate(array $values)
+  /**
+   * Hydrate from data source
+   *
+   * @param array   $values     format [field_name]=>value
+   * @param boolean $persistent store this as the latest persisted data
+   *
+   * @throws MapperException
+   * @return $this
+   */
+  public function hydrate(array $values, $persistent = false)
   {
     $map = static::_getColumnMap();
     foreach($values as $key => $value)
     {
-      $this->$map[$key] = $value;
+      // convert to property name
+      if(property_exists($this, $key))
+      {
+        $property = $key;
+      }
+      elseif(isset($map[$key]) && property_exists($this, $map[$key]))
+      {
+        $property = $map[$key];
+      }
+      else
+      {
+        throw new MapperException(
+          'Cannot determine property ' . get_called_class() . '->$' . $key
+        );
+      }
+
+      $this->{$property} = $value;
+      if($persistent)
+      {
+        $this->_persistedData[$property] = $value;
+      }
     }
     return $this;
+  }
+
+  public function setPersistedData($data)
+  {
+    foreach($data as $property => $value)
+    {
+      $this->_persistedData[$property] = $value;
+    }
+  }
+
+  public function getChangedFields()
+  {
+    $changes = [];
+    $fields  = array_keys(static::_getMetadata()->fieldMappings);
+    foreach($fields as $field)
+    {
+      if((!isset($this->_persistedData[$field]))
+        || $this->$field !== $this->_persistedData[$field]
+      )
+      {
+        $changes[$field] = $this->$field;
+      }
+    }
+    return $changes;
+  }
+
+  public function getChangedColumns()
+  {
+    $changes = [];
+    $map     = static::_getMetadata()->fieldMappings;
+    $data    = $this->getChangedFields();
+    foreach($data as $field => $value)
+    {
+      $changes[$map[$field]['columnName']] = $value;
+    }
+    return $changes;
   }
 
   public function setExists($bool = true)

@@ -37,7 +37,7 @@ interface IMapper
   public static function deleteWhere(array $criteria);
 
   /**
-   * @return $this
+   * @return array changed columns previous values, keyed by propertyName
    */
   public function save();
 
