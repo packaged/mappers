@@ -54,14 +54,17 @@ abstract class CassandraMapper extends BaseMapper
 
   public function hydrate(array $values, $persistent = false)
   {
-    foreach(static::_getMetadata()->fieldMappings as $map)
+    if($persistent)
     {
-      if(isset($values[$map['columnName']]))
+      foreach(static::_getMetadata()->fieldMappings as $map)
       {
-        $values[$map['columnName']] = static::_unpack(
-          $values[$map['columnName']],
-          static::_getCqlFieldType($map)
-        );
+        if(isset($values[$map['columnName']]))
+        {
+          $values[$map['columnName']] = static::_unpack(
+            $values[$map['columnName']],
+            static::_getCqlFieldType($map)
+          );
+        }
       }
     }
     return parent::hydrate($values, $persistent);
