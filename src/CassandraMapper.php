@@ -255,6 +255,10 @@ abstract class CassandraMapper extends BaseMapper
         $this->$field,
         static::_getCqlFieldType($map[$field])
       );
+      if($changes[$map[$field]['columnName']] === null)
+      {
+        $changes[$map[$field]['columnName']] = '';
+      }
     }
 
     // CQL Table
