@@ -11,13 +11,14 @@ namespace Packaged\Mappers;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Packaged\DocBlock\DocBlockParser;
+use Packaged\Helpers\System;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
 use Packaged\Mappers\Mapping\AutoMappingDriver;
 use Packaged\Mappers\Mapping\ChainedDriver;
 use Respect\Validation\Validator;
 
-abstract class BaseMapper implements IMapper
+abstract class BaseMapper implements IMapper, \JsonSerializable
 {
   /**
    * @var \DateTime|null
@@ -452,5 +453,34 @@ abstract class BaseMapper implements IMapper
   public function exists()
   {
     return $this->_exists;
+  }
+
+  /**
+   * (PHP 5 &gt;= 5.4.0)<br/>
+   * Specify data which should be serialized to JSON
+   * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+   * @return mixed data which can be serialized by <b>json_encode</b>,
+   * which is a value of any type other than a resource.
+   */
+  public function jsonSerialize()
+  {
+    // HHVM does not json_encode
+    if(System::isHHVM())
+    {
+      $values = get_public_properties($this);
+      foreach($values as $k => $v)
+      {
+        if($v instanceof \DateTime)
+        {
+          $values[$k] = [
+            'date'          => $v->format('Y-m-d H:i:s'),
+            'timezone_type' => 1,
+            'timezone'      => $v->format('O'),
+          ];
+        }
+      }
+      return $values;
+    }
+    return $this;
   }
 }
