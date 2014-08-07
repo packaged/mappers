@@ -1,12 +1,9 @@
 {
   "name":              "packaged/mappers",
+  "description":       "Usability wrapper over Doctrine2",
   "license":           "MIT",
   "minimum-stability": "dev",
   "authors":           [
-    {
-      "name":  "Brooke Bryan",
-      "email": "brooke@bajb.net"
-    },
     {
       "name":  "Tom Kay",
       "email": "oridan82@gmail.com"
