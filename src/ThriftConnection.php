@@ -30,7 +30,7 @@ class ThriftConnection implements IConnection
   protected $_persistConnection = false;
   protected $_recieveTimeout = 1000;
   protected $_sendTimeout = 1000;
-  protected $_connectTimeout = 100;
+  protected $_connectTimeout = 200;
 
   protected $_client;
   protected $_socket;
