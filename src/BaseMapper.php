@@ -394,9 +394,7 @@ abstract class BaseMapper implements IMapper, \JsonSerializable
       }
       else
       {
-        throw new MapperException(
-          'Cannot determine property ' . get_called_class() . '->$' . $key
-        );
+        continue;
       }
 
       $this->{$property} = $value;
