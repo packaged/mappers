@@ -13,7 +13,13 @@ class ConnectionResolver implements IConnectionResolver
     {
       throw new MapperException('Connection (' . $name . ') not found');
     }
-      return $this->_connections[$name];
+
+    if(is_callable($this->_connections[$name]))
+    {
+      $this->_connections[$name] = $this->_connections[$name]();
+    }
+
+    return $this->_connections[$name];
   }
 
   public function addConnection($name, $connection)

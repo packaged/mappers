@@ -28,16 +28,19 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
       )
     );
 
-    $db = \Doctrine\ORM\EntityManager::create(
-      [
-        'driver'   => 'pdo_mysql',
-        'host'     => 'localhost',
-        'dbname'   => 'cubex',
-        'user'     => 'root',
-        'password' => ''
-      ],
-      $conf
-    );
+    $db = function () use ($conf)
+    {
+      return \Doctrine\ORM\EntityManager::create(
+        [
+          'driver'   => 'pdo_mysql',
+          'host'     => 'localhost',
+          'dbname'   => 'cubex',
+          'user'     => 'root',
+          'password' => ''
+        ],
+        $conf
+      );
+    };
     /*$db->getConnection()->getConfiguration()->setSQLLogger(
       new \Doctrine\DBAL\Logging\EchoSQLLogger()
     );*/
