@@ -129,6 +129,7 @@ abstract class DoctrineMapper extends BaseMapper
       ];
       $this->_persistedData[$field] = $value;
     }
+    $this->_savedChanges = $changesMade;
     return $changesMade;
   }
 

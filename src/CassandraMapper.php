@@ -286,6 +286,7 @@ abstract class CassandraMapper extends BaseMapper
         ];
         $this->_persistedData[$field] = $value;
       }
+      $this->_savedChanges = $changesMade;
       return $changesMade;
     }
     return [];

@@ -46,6 +46,7 @@ abstract class BaseMapper implements IMapper, \JsonSerializable
   private static $_docBlockProperties;
 
   protected $_persistedData;
+  protected $_savedChanges;
 
   public static function getServiceName()
   {
@@ -428,6 +429,11 @@ abstract class BaseMapper implements IMapper, \JsonSerializable
       }
     }
     return $changes;
+  }
+
+  public function getSavedChanges()
+  {
+    return $this->_savedChanges;
   }
 
   public function getChangedColumns()
