@@ -10,9 +10,18 @@ namespace Packaged\Mappers;
 
 abstract class CounterCassandraMapper extends CassandraMapper
 {
+  public static function useAutoTimestamp()
+  {
+    return false;
+  }
+
   protected static function _getCqlFieldType($map)
   {
-    if(isset($map['id']) && $map['id'])
+    $keyCols = self::_getKeyColumns();
+
+    if((isset($map['id']) && $map['id'])
+      || in_array($map['columnName'], $keyCols)
+    )
     {
       return parent::_getCqlFieldType($map);
     }
