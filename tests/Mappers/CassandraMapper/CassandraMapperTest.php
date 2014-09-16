@@ -87,12 +87,14 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $user->save();
     $id = $user->id();
     $this->assertNotEmpty($id);
+    $user->clearSavedChanges();
 
     $this->compareObjectsSimilar($user, CassUser::load($id));
     $user->name        = rand();
     $user->description = rand();
 
     $user = $user->saveAsNew(uniqid('testingnew'));
+    $user->clearSavedChanges();
     $this->assertNotSame($id, $user->id());
     $this->compareObjects($user, CassUser::load($user->id()));
   }
@@ -142,6 +144,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $user->description = 'desc' . rand() . time();
     $user->save();
     $this->assertTrue($user->exists());
+    $user->clearSavedChanges();
 
     $loaded = CassUser::load($user->id());
     $this->assertEquals($user->id(), $loaded->id());
@@ -190,7 +193,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     $user->description = rand();
     $user->save();
     $id = $user->id();
-    $this->compareObjects($user, CassUser::load($id));
+    $this->compareObjects($user->clearSavedChanges(), CassUser::load($id));
 
     $user->delete();
 
@@ -380,7 +383,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
       IndexedMapper::loadWhere(['indexed_field' => 'fail'])
     );
     $this->assertEquals(
-      [$test1],
+      [$test1->clearSavedChanges()],
       IndexedMapper::loadWhere(['indexed_field' => $search1])
     );
 
@@ -389,7 +392,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
       IndexedMapper::loadWhere(['custom_indexed_field' => 'fail'])
     );
     $this->assertEquals(
-      [$test2],
+      [$test2->clearSavedChanges()],
       IndexedMapper::loadWhere(['custom_indexed_field' => $search2])
     );
   }

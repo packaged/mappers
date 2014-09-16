@@ -436,6 +436,12 @@ abstract class BaseMapper implements IMapper, \JsonSerializable
     return $this->_savedChanges;
   }
 
+  public function clearSavedChanges()
+  {
+    $this->_savedChanges = null;
+    return $this;
+  }
+
   public function getChangedColumns()
   {
     $changes = [];

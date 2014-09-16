@@ -305,6 +305,7 @@ abstract class CassandraMapper extends BaseMapper
   {
     $data = self::getData($this->id());
     $this->hydrate($data, true);
+    $this->clearSavedChanges();
     return $this;
   }
 

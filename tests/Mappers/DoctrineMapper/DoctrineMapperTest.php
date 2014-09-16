@@ -143,6 +143,8 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
     $user->save();
     $this->assertTrue($user->exists());
 
+    $user->clearSavedChanges();
+
     $loaded = User::load($user->id());
     $this->assertEquals($user->id(), $loaded->id());
     $this->compareObjects($user, $loaded);
@@ -155,13 +157,16 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
     $user->getEntityManager()->detach($user);
     $newUser->getEntityManager()->detach($newUser);
     $this->compareObjects(
-      User::loadWhere(['description' => $uniqueDescription]),
-      [$user, $newUser]
+      [$user->clearSavedChanges(), $newUser->clearSavedChanges()],
+      User::loadWhere(['description' => $uniqueDescription])
     );
 
     $user->name = 'name' . rand() . time();
     $user->save();
-    $this->compareObjects(User::loadWhere(['name' => $user->name]), [$user]);
+    $this->compareObjects(
+      [$user->clearSavedChanges()],
+      User::loadWhere(['name' => $user->name])
+    );
   }
 
   public function testReload()
