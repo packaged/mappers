@@ -66,7 +66,7 @@ class ThriftConnection implements IConnection
 
     if(isset($config['port']))
     {
-      $instance = new static($hosts, (int)$config['port'] ? : 9160);
+      $instance = new static($hosts, (int)$config['port'] ?: 9160);
     }
     else
     {
@@ -77,6 +77,21 @@ class ThriftConnection implements IConnection
     if(isset($config['keyspace']))
     {
       $instance->setKeyspace($config['keyspace']);
+    }
+
+    if(isset($config['connect_timeout']))
+    {
+      $instance->setConnectTimeout($config['connect_timeout']);
+    }
+
+    if(isset($config['send_timeout']))
+    {
+      $instance->setSendTimeout($config['send_timeout']);
+    }
+
+    if(isset($config['receive_timeout']))
+    {
+      $instance->setReceiveTimeout($config['receive_timeout']);
     }
 
     return $instance;
@@ -336,8 +351,8 @@ class ThriftConnection implements IConnection
 
   /**
    * @param IPreparedStatement $statement
-   * @param array                 $parameters
-   * @param int                   $consistency
+   * @param array              $parameters
+   * @param int                $consistency
    *
    * @return array|mixed
    * @throws Exceptions\CassandraException
@@ -348,7 +363,7 @@ class ThriftConnection implements IConnection
     $consistency = ConsistencyLevel::QUORUM
   )
   {
-    if(! ($statement instanceof ThriftCQLPreparedStatement))
+    if(!($statement instanceof ThriftCQLPreparedStatement))
     {
       throw new \Exception(
         'Statement not an instance of ThriftCQLPreparedStatement'
