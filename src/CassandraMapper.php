@@ -554,12 +554,15 @@ abstract class CassandraMapper extends BaseMapper
    */
   private static function _reverseIfLE($bin)
   {
-    static $isBigEndian = null;
+    // TODO: The logic below is incorrect!
+    // We always run on LE so just reverse everything for now
+    return strrev($bin);
+    /*static $isBigEndian = null;
     if($isBigEndian === null)
     {
       $isBigEndian = unpack('v', pack('S', 256)) == 256;
     }
-    return $isBigEndian ? strrev($bin) : $bin;
+    return $isBigEndian ? strrev($bin) : $bin;*/
   }
 
   protected static function _pack($value, $type)
