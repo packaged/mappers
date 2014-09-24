@@ -8,9 +8,9 @@
 
 namespace Packaged\Mappers;
 
+use Packaged\Mappers\Exceptions\CassandraException;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
-use Thrift\Exception\TTransportException;
 
 abstract class CassandraMapper extends BaseMapper
 {
@@ -127,6 +127,10 @@ abstract class CassandraMapper extends BaseMapper
             throw $e;
           }
         }
+        else
+        {
+          throw $e;
+        }
       }
     }
     throw new \Exception('Query not successful, but failed to throw exception');
@@ -152,15 +156,15 @@ abstract class CassandraMapper extends BaseMapper
       return true;
     }
 
-    if($e instanceof TTransportException
-      && strpos($e->getMessage(), 'TSocket: timed out') === 0
+    if($e instanceof CassandraException
+      && strpos($e->getMessage(), 'Index already exists') === 0
     )
     {
-      // timeout - always retry
-      return true;
+      // never retry if index exists
+      return false;
     }
 
-    return false;
+    return true;
   }
 
   /**
