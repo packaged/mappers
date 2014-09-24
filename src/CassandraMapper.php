@@ -10,6 +10,7 @@ namespace Packaged\Mappers;
 
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
+use Thrift\Exception\TTransportException;
 
 abstract class CassandraMapper extends BaseMapper
 {
@@ -117,7 +118,7 @@ abstract class CassandraMapper extends BaseMapper
       }
       catch(\Exception $e)
       {
-        if(!static::_handleException($e))
+        if(static::_handleException($e))
         {
           static::getConnection()->disconnect();
           $retries--;
@@ -131,6 +132,14 @@ abstract class CassandraMapper extends BaseMapper
     throw new \Exception('Query not successful, but failed to throw exception');
   }
 
+  /**
+   * Return true if exception was handled and query should be retried
+   *
+   * @param \Exception $e
+   *
+   * @return bool
+   * @throws \Exception
+   */
   protected static function _handleException(\Exception $e)
   {
     if(strpos(
@@ -142,6 +151,15 @@ abstract class CassandraMapper extends BaseMapper
       static::createTable();
       return true;
     }
+
+    if($e instanceof TTransportException
+      && strpos($e->getMessage(), 'TSocket: timed out') === 0
+    )
+    {
+      // timeout - always retry
+      return true;
+    }
+
     return false;
   }
 
