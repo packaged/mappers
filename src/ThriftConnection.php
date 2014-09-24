@@ -112,9 +112,9 @@ class ThriftConnection implements IConnection
   public function setReceiveTimeout($timeout)
   {
     $this->_recieveTimeout = $timeout;
-    if($this->_socket instanceof TSocketPool)
+    if($this->socket() instanceof TSocketPool)
     {
-      $this->_socket->setRecvTimeout($timeout);
+      $this->socket()->setRecvTimeout($timeout);
     }
     return $this;
   }
@@ -122,9 +122,9 @@ class ThriftConnection implements IConnection
   public function setSendTimeout($timeout)
   {
     $this->_sendTimeout = $timeout;
-    if($this->_socket instanceof TSocketPool)
+    if($this->socket() instanceof TSocketPool)
     {
-      $this->_socket->setSendTimeout($timeout);
+      $this->socket()->setSendTimeout($timeout);
     }
     return $this;
   }
@@ -159,9 +159,9 @@ class ThriftConnection implements IConnection
     {
       $port = $this->_port;
     }
-    if($this->_socket instanceof TSocketPool)
+    if($this->socket() instanceof TSocketPool)
     {
-      $this->_socket->addServer($host, $port);
+      $this->socket()->addServer($host, $port);
     }
     return $this;
   }
@@ -170,20 +170,15 @@ class ThriftConnection implements IConnection
   {
     if($this->_client === null)
     {
-      $this->_socket = new TSocketPool(
-        $this->_hosts, $this->_port, $this->_persistConnection
-      );
+      $this->socket()->setDebug(true);
+      $this->socket()->setSendTimeout($this->_connectTimeout);
 
-      $this->_socket->setDebug(true);
-      $this->_socket->setSendTimeout($this->_connectTimeout);
-
-      $this->_transport = new TFramedTransport($this->_socket);
-      $this->_protocol  = new TBinaryProtocolAccelerated($this->_transport);
-      $this->_client    = new CassandraClient($this->_protocol);
+      $this->_protocol = new TBinaryProtocolAccelerated($this->transport());
+      $this->_client   = new CassandraClient($this->_protocol);
 
       try
       {
-        $this->_transport->open();
+        $this->transport()->open();
         $this->_connected = true;
       }
       catch(TException $e)
@@ -191,8 +186,13 @@ class ThriftConnection implements IConnection
         $this->_connected = false;
       }
 
-      $this->_socket->setRecvTimeout($this->_recieveTimeout);
-      $this->_socket->setSendTimeout($this->_sendTimeout);
+      $this->socket()->setRecvTimeout($this->_recieveTimeout);
+      $this->socket()->setSendTimeout($this->_sendTimeout);
+
+      if($this->_keyspace)
+      {
+        $this->_client->set_keyspace($this->_keyspace);
+      }
     }
     return $this->_client;
   }
@@ -206,7 +206,7 @@ class ThriftConnection implements IConnection
   {
     $this->_clearStmtCache();
     $this->_client = null;
-    $this->_transport->close();
+    $this->transport()->close();
     $this->_transport = null;
     $this->_protocol  = null;
     $this->_connected = false;
@@ -216,8 +216,11 @@ class ThriftConnection implements IConnection
   {
     try
     {
-      $this->client()->set_keyspace($keyspace);
       $this->_keyspace = $keyspace;
+      if($this->_client)
+      {
+        $this->client()->set_keyspace($keyspace);
+      }
     }
     catch(InvalidRequestException $e)
     {
@@ -231,13 +234,26 @@ class ThriftConnection implements IConnection
     return $this->_keyspace;
   }
 
+  /**
+   * @return TSocketPool
+   */
   public function socket()
   {
+    if(!$this->_socket)
+    {
+      $this->_socket = new TSocketPool(
+        $this->_hosts, $this->_port, $this->_persistConnection
+      );
+    }
     return $this->_socket;
   }
 
   public function transport()
   {
+    if(!$this->_transport)
+    {
+      $this->_transport = new TFramedTransport($this->socket());
+    }
     return $this->_transport;
   }
 
@@ -317,7 +333,7 @@ class ThriftConnection implements IConnection
     $query, $compression = Compression::NONE, $allowStmtCache = true
   )
   {
-    $cacheKey = md5($query);
+    $cacheKey = md5($query . '@' . $this->socket()->getHost());
     if($allowStmtCache && (!empty($this->_stmtCache[$cacheKey])))
     {
       $stmt = $this->_stmtCache[$cacheKey];

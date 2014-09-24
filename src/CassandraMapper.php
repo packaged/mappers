@@ -119,6 +119,7 @@ abstract class CassandraMapper extends BaseMapper
       {
         if(!static::_handleException($e))
         {
+          static::getConnection()->disconnect();
           $retries--;
           if(!$retries)
           {
