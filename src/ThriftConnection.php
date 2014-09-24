@@ -176,8 +176,6 @@ class ThriftConnection implements IConnection
 
       $this->_socket->setDebug(true);
       $this->_socket->setSendTimeout($this->_connectTimeout);
-      $this->_socket->setRetryInterval(0);
-      $this->_socket->setNumRetries(1);
 
       $this->_transport = new TFramedTransport($this->_socket);
       $this->_protocol  = new TBinaryProtocolAccelerated($this->_transport);
