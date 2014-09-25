@@ -8,6 +8,8 @@
 
 namespace Packaged\Mappers;
 
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Expr\Expression;
 use Doctrine\ORM\Tools\SchemaTool;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 
@@ -80,8 +82,34 @@ abstract class DoctrineMapper extends BaseMapper
     array $criteria, $order = null, $limit = null, $offset = null
   )
   {
+    $crit = Criteria::create();
+    if($order)
+    {
+      $crit->orderBy($order);
+    }
+    $crit->setMaxResults($limit);
+    $crit->setFirstResult($offset);
+    foreach($criteria as $k => $v)
+    {
+      if($v instanceof Criteria)
+      {
+        $crit->andWhere($crit->getWhereExpression());
+      }
+      elseif($v instanceof Expression)
+      {
+        $crit->andWhere($v);
+      }
+      else
+      {
+        $expr = Criteria::expr();
+        $crit->andWhere(
+          $expr->andX($expr->eq($k, $v))
+        );
+      }
+    }
+
     $entities = static::getEntityManager()->getRepository(get_called_class())
-      ->findBy($criteria, $order, $limit, $offset);
+      ->matching($crit)->toArray();
 
     foreach($entities as $entity)
     {
