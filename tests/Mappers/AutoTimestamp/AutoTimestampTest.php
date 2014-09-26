@@ -3,8 +3,8 @@ use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\ORM\Tools\Setup;
-use Packaged\Mappers\DoctrineMapper;
 use Packaged\Mappers\ConnectionResolver;
+use Packaged\Mappers\DoctrineMapper;
 use Packaged\Mappers\Mapping\AutoMappingDriver;
 use Packaged\Mappers\Mapping\ChainedDriver;
 
@@ -85,8 +85,7 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
     $mapper->someData = 'test data';
     $mapper->save();
 
-    $newMapper = NonTimestampMapper::load($mapper->id());
-    print_r($newMapper);
+    NonTimestampMapper::load($mapper->id());
   }
   /*
     public function testDifferentFields()

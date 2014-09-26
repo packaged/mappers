@@ -18,6 +18,7 @@ use cassandra\TimedOutException;
 use cassandra\UnavailableException;
 use Packaged\Mappers\Exceptions\CassandraException;
 use Thrift\Exception\TApplicationException;
+use Thrift\Exception\TException;
 use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TSocketPool;
@@ -26,6 +27,7 @@ class ThriftConnection implements IConnection
 {
   protected $_hosts;
   protected $_deadHosts = [];
+  protected $_deadHostsRetries = 1;
   protected $_port;
   protected $_persistConnection = false;
   protected $_recieveTimeout = 1000;
@@ -207,8 +209,8 @@ class ThriftConnection implements IConnection
     $this->transport()->close();
     $this->_transport = null;
     $this->_protocol  = null;
-    $this->_connected = false;
     $this->_socket    = null;
+    $this->_connected = false;
   }
 
   public function dropHost($host = null)
@@ -248,16 +250,36 @@ class ThriftConnection implements IConnection
 
   /**
    * @return TSocketPool
+   * @throws TException
    */
   public function socket()
   {
     if(!$this->_socket)
     {
-      $this->_socket = new TSocketPool(
-        $this->getAvailableHosts(), $this->_port, $this->_persistConnection
-      );
+      $hosts = $this->getAvailableHosts();
+      if((!$hosts) && ($this->_deadHostsRetries-- > 0))
+      {
+        $this->_deadHosts = [];
+        $hosts            = $this->_hosts;
+      }
+      if(!$hosts)
+      {
+        throw new TException(
+          'TSocketPool: All hosts in pool are down. ('
+          . implode(',', $this->_hosts) . ')'
+        );
+      }
+
+      $this->_socket = $this->_newSocket($hosts);
     }
     return $this->_socket;
+  }
+
+  protected function _newSocket($hosts)
+  {
+    return new TSocketPool(
+      $hosts, $this->_port, $this->_persistConnection
+    );
   }
 
   public function transport()
@@ -347,14 +369,6 @@ class ThriftConnection implements IConnection
   {
     try
     {
-      if(!$this->getAvailableHosts())
-      {
-        throw new \Exception(
-          'TSocketPool: All hosts in pool are down. ('
-          . implode(',', $this->_hosts) . ')'
-        );
-      }
-
       $client   = $this->client();
       $cacheKey = md5($query . '@' . $this->socket()->getHost());
       if($allowStmtCache && (!empty($this->_stmtCache[$cacheKey])))

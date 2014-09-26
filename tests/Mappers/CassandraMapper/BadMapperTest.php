@@ -4,9 +4,9 @@ namespace Mappers\CassandraMapper;
 use cassandra\ConsistencyLevel;
 use Packaged\Mappers\CassandraMapper;
 use Packaged\Mappers\ConnectionResolver;
-use Packaged\Mappers\Exceptions\CassandraException;
 use Packaged\Mappers\IPreparedStatement;
 use Packaged\Mappers\ThriftConnection;
+use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSocketPool;
 
@@ -24,7 +24,7 @@ class BadMapperTest extends \PHPUnit_Framework_TestCase
   }
 
   /**
-   * @expectedException \Packaged\Mappers\Exceptions\CassandraException
+   * @expectedException \Thrift\Exception\TException
    * @expectedExceptionMessage TSocketPool: All hosts in pool are down. (localhost)
    */
   public function testMockConnection()
@@ -50,15 +50,11 @@ class MockSocket extends TSocketPool
 
 class MockThriftConnection extends ThriftConnection
 {
-  public function socket()
+  protected function _newSocket($hosts)
   {
-    if(!$this->_socket)
-    {
-      $this->_socket = new MockSocket(
-        $this->getAvailableHosts(), $this->_port, $this->_persistConnection
-      );
-    }
-    return $this->_socket;
+    return new MockSocket(
+      $hosts, $this->_port, $this->_persistConnection
+    );
   }
 }
 
@@ -94,7 +90,7 @@ class BadThriftConnection extends ThriftConnection
 
   public function client()
   {
-    throw new CassandraException('TSocketPool: All hosts in pool are down.');
+    throw new TException('TSocketPool: All hosts in pool are down.');
   }
 }
 

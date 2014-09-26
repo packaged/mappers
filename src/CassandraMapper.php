@@ -108,7 +108,7 @@ abstract class CassandraMapper extends BaseMapper
   public static function execute($query, array $parameters = [])
   {
     $retries = static::$_queryRetries;
-    $conn = static::getConnection();
+    $conn    = static::getConnection();
     while($retries)
     {
       try
@@ -161,14 +161,6 @@ abstract class CassandraMapper extends BaseMapper
     )
     {
       // never retry if index exists
-      return false;
-    }
-
-    if($e instanceof CassandraException &&
-      strpos($e->getMessage(), 'TSocketPool: All hosts in pool are down') === 0
-    )
-    {
-      // never retry if all hosts are down
       return false;
     }
 
