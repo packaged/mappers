@@ -600,8 +600,9 @@ abstract class CassandraMapper extends BaseMapper
         case self::CASSANDRA_TYPE_TIMESTAMP:
         case self::CASSANDRA_TYPE_COUNTER:
           return self::_packLong($value);
-        case self::CASSANDRA_TYPE_DOUBLE:
         case self::CASSANDRA_TYPE_DECIMAL:
+          return self::_packDecimal($value);
+        case self::CASSANDRA_TYPE_DOUBLE:
           return self::_reverseIfLE(pack('d', $value));
         case self::CASSANDRA_TYPE_FLOAT:
           return self::_reverseIfLE(pack('f', $value));
@@ -624,8 +625,9 @@ abstract class CassandraMapper extends BaseMapper
         case self::CASSANDRA_TYPE_TIMESTAMP:
         case self::CASSANDRA_TYPE_COUNTER:
           return self::_unpackLong($data);
-        case self::CASSANDRA_TYPE_DOUBLE:
         case self::CASSANDRA_TYPE_DECIMAL:
+          return self::_unpackDecimal($data);
+        case self::CASSANDRA_TYPE_DOUBLE:
           return current(unpack('d', self::_reverseIfLE($data)));
         case self::CASSANDRA_TYPE_FLOAT:
           return current(unpack('f', self::_reverseIfLE($data)));
@@ -634,6 +636,69 @@ abstract class CassandraMapper extends BaseMapper
       }
     }
     return $data;
+  }
+
+  protected static function _packDecimal($value)
+  {
+    $valueStr = strtolower((string)$value);
+    $expOffset = 0;
+    if(strpos($valueStr, 'e') !== false)
+    {
+      $parts = explode("e", $valueStr);
+      $valueStr = $parts[0];
+      $expOffset = (int)$parts[1];
+    }
+
+    $parts = explode(".", $valueStr);
+    $hasFraction = count($parts) > 1;
+    $digits = (int)($hasFraction ? $parts[0] . $parts[1] : $parts[0]);
+    $exp = $hasFraction ? strlen($parts[1]) : 0;
+    $exp -= $expOffset;
+
+    $expBytes = pack('N', $exp);
+    // TODO: This always encodes as 64 bit. Find a way to use less bytes
+    $digitBytes = self::_packLong($digits);
+    return $expBytes . $digitBytes;
+  }
+
+  protected static function _unpackDecimal($data)
+  {
+    // Decimals are stored as (-exponent).(value as int)
+    // First 4 bytes are exponent, both are big-endian
+    $expBin = substr($data, 0, 4);
+    $valueBin = substr($data, 4);
+    // exponent is an ordinary 32-bit BE int
+    $exp = current(unpack('l', self::_reverseIfLE($expBin)));
+
+    // See if it was packed as a double (64 bits with unusual exponent)
+    if((abs($exp) > 10) && (strlen($data) == 8))
+    {
+      return current(unpack('d', self::_reverseIfLE($data)));
+    }
+
+    // value is a BE int of arbitrary length
+    $value = 0;
+    $isNeg = current(unpack('c', $valueBin[0])) < 0;
+
+    $str = strrev($valueBin);
+    for($i = 0; $i < strlen($str); $i++)
+    {
+      if($isNeg)
+      {
+        $n = ord(chr(~ord($str[$i])));
+      }
+      else
+      {
+        $n = ord($str[$i]);
+      }
+      $value += $n << ($i * 8);
+    }
+
+    if($isNeg)
+    {
+      $value = -($value + 1);
+    }
+    return round($value * pow(10, -$exp), $exp);
   }
 
   protected static function _packLong($value)
