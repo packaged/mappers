@@ -41,7 +41,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
       (array)$this->id()
     );
     self::execute(
-      'UPDATE ' . static::getTableName() . ' SET "'
+      'UPDATE "' . static::getTableName() . '" SET "'
       . $column . '" = "' . $column . '" + ? WHERE ' . implode(' AND ', $keys),
       $values
     );
@@ -61,7 +61,7 @@ abstract class CounterCassandraMapper extends CassandraMapper
       (array)$this->id()
     );
     self::execute(
-      'UPDATE ' . static::getTableName() . ' SET "'
+      'UPDATE "' . static::getTableName() . '" SET "'
       . $column . '" = "' . $column . '" - ? WHERE ' . implode(' AND ', $keys),
       $values
     );
