@@ -18,7 +18,6 @@ use cassandra\TimedOutException;
 use cassandra\UnavailableException;
 use Packaged\Mappers\Exceptions\CassandraException;
 use Thrift\Exception\TApplicationException;
-use Thrift\Exception\TException;
 use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TSocketPool;
@@ -26,6 +25,7 @@ use Thrift\Transport\TSocketPool;
 class ThriftConnection implements IConnection
 {
   protected $_hosts;
+  protected $_deadHosts = [];
   protected $_port;
   protected $_persistConnection = false;
   protected $_recieveTimeout = 1000;
@@ -152,6 +152,11 @@ class ThriftConnection implements IConnection
     return $this->_hosts;
   }
 
+  public function getAvailableHosts()
+  {
+    return array_diff($this->_hosts, $this->_deadHosts);
+  }
+
   public function addHost($host, $port = null)
   {
     $this->_hosts[] = $host;
@@ -176,15 +181,8 @@ class ThriftConnection implements IConnection
       $this->_protocol = new TBinaryProtocolAccelerated($this->transport());
       $this->_client   = new CassandraClient($this->_protocol);
 
-      try
-      {
-        $this->transport()->open();
-        $this->_connected = true;
-      }
-      catch(TException $e)
-      {
-        $this->_connected = false;
-      }
+      $this->transport()->open();
+      $this->_connected = true;
 
       $this->socket()->setRecvTimeout($this->_recieveTimeout);
       $this->socket()->setSendTimeout($this->_sendTimeout);
@@ -210,6 +208,20 @@ class ThriftConnection implements IConnection
     $this->_transport = null;
     $this->_protocol  = null;
     $this->_connected = false;
+    $this->_socket    = null;
+  }
+
+  public function dropHost($host = null)
+  {
+    if($host == null)
+    {
+      $host = $this->socket()->getHost();
+    }
+    if($host)
+    {
+      $this->_deadHosts[] = $host;
+      $this->disconnect();
+    }
   }
 
   public function setKeyspace($keyspace)
@@ -242,7 +254,7 @@ class ThriftConnection implements IConnection
     if(!$this->_socket)
     {
       $this->_socket = new TSocketPool(
-        $this->_hosts, $this->_port, $this->_persistConnection
+        $this->getAvailableHosts(), $this->_port, $this->_persistConnection
       );
     }
     return $this->_socket;
@@ -333,16 +345,25 @@ class ThriftConnection implements IConnection
     $query, $compression = Compression::NONE, $allowStmtCache = true
   )
   {
-    $cacheKey = md5($query . '@' . $this->socket()->getHost());
-    if($allowStmtCache && (!empty($this->_stmtCache[$cacheKey])))
+    try
     {
-      $stmt = $this->_stmtCache[$cacheKey];
-    }
-    else
-    {
-      try
+      if(!$this->getAvailableHosts())
       {
-        $prep = $this->client()->prepare_cql3_query(
+        throw new \Exception(
+          'TSocketPool: All hosts in pool are down. ('
+          . implode(',', $this->_hosts) . ')'
+        );
+      }
+
+      $client   = $this->client();
+      $cacheKey = md5($query . '@' . $this->socket()->getHost());
+      if($allowStmtCache && (!empty($this->_stmtCache[$cacheKey])))
+      {
+        $stmt = $this->_stmtCache[$cacheKey];
+      }
+      else
+      {
+        $prep = $client->prepare_cql3_query(
           $query,
           $compression
         );
@@ -355,12 +376,12 @@ class ThriftConnection implements IConnection
           $this->_stmtCache[$cacheKey] = $stmt;
         }
       }
-      catch(\Exception $e)
-      {
-        throw $this->formException($e);
-      }
+      return $stmt;
     }
-    return $stmt;
+    catch(\Exception $e)
+    {
+      throw $this->formException($e);
+    }
   }
 
   /**
@@ -384,7 +405,6 @@ class ThriftConnection implements IConnection
       );
     }
 
-    $return = [];
     try
     {
       $result = $this->client()->execute_prepared_cql3_query(
@@ -405,6 +425,7 @@ class ThriftConnection implements IConnection
         return $result->num;
       }
 
+      $returnRows = [];
       foreach($result->rows as $row)
       {
         /**
@@ -419,14 +440,14 @@ class ThriftConnection implements IConnection
           $resultRow[$column->name] = $column->value;
         }
 
-        $return[] = $resultRow;
+        $returnRows[] = $resultRow;
       }
+      return $returnRows;
     }
     catch(\Exception $e)
     {
       throw $this->formException($e);
     }
-    return $return;
   }
 
   private function _clearStmtCache()

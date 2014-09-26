@@ -108,11 +108,11 @@ abstract class CassandraMapper extends BaseMapper
   public static function execute($query, array $parameters = [])
   {
     $retries = static::$_queryRetries;
+    $conn = static::getConnection();
     while($retries)
     {
       try
       {
-        $conn = static::getConnection();
         $stmt = $conn->prepare($query);
         return $stmt->execute($parameters);
       }
@@ -120,7 +120,7 @@ abstract class CassandraMapper extends BaseMapper
       {
         if(static::_handleException($e))
         {
-          static::getConnection()->disconnect();
+          $conn->dropHost();
           $retries--;
           if(!$retries)
           {
@@ -156,11 +156,19 @@ abstract class CassandraMapper extends BaseMapper
       return true;
     }
 
-    if($e instanceof CassandraException
-      && strpos($e->getMessage(), 'Index already exists') === 0
+    if($e instanceof CassandraException &&
+      strpos($e->getMessage(), 'Index already exists') === 0
     )
     {
       // never retry if index exists
+      return false;
+    }
+
+    if($e instanceof CassandraException &&
+      strpos($e->getMessage(), 'TSocketPool: All hosts in pool are down') === 0
+    )
+    {
+      // never retry if all hosts are down
       return false;
     }
 
