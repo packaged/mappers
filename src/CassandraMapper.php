@@ -640,19 +640,19 @@ abstract class CassandraMapper extends BaseMapper
 
   protected static function _packDecimal($value)
   {
-    $valueStr = strtolower((string)$value);
+    $valueStr  = strtolower((string)$value);
     $expOffset = 0;
     if(strpos($valueStr, 'e') !== false)
     {
-      $parts = explode("e", $valueStr);
-      $valueStr = $parts[0];
+      $parts     = explode("e", $valueStr);
+      $valueStr  = $parts[0];
       $expOffset = (int)$parts[1];
     }
 
-    $parts = explode(".", $valueStr);
+    $parts       = explode(".", $valueStr);
     $hasFraction = count($parts) > 1;
-    $digits = (int)($hasFraction ? $parts[0] . $parts[1] : $parts[0]);
-    $exp = $hasFraction ? strlen($parts[1]) : 0;
+    $digits      = (int)($hasFraction ? $parts[0] . $parts[1] : $parts[0]);
+    $exp         = $hasFraction ? strlen($parts[1]) : 0;
     $exp -= $expOffset;
 
     $expBytes = pack('N', $exp);
@@ -665,7 +665,7 @@ abstract class CassandraMapper extends BaseMapper
   {
     // Decimals are stored as (-exponent).(value as int)
     // First 4 bytes are exponent, both are big-endian
-    $expBin = substr($data, 0, 4);
+    $expBin   = substr($data, 0, 4);
     $valueBin = substr($data, 4);
     // exponent is an ordinary 32-bit BE int
     $exp = current(unpack('l', self::_reverseIfLE($expBin)));
