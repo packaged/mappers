@@ -13,6 +13,7 @@
     "php":                      ">=5.4.0",
     "doctrine/orm":             "2.5.*@dev",
     "respect/validation":       "dev-master",
+    "packaged/helpers":         "*",
     "packaged/cassandrathrift": "dev-master",
     "packaged/docblock":        "*"
   },
