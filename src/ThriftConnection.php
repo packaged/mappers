@@ -18,6 +18,7 @@ use cassandra\TimedOutException;
 use cassandra\UnavailableException;
 use Packaged\Mappers\Exceptions\CassandraException;
 use Thrift\Exception\TApplicationException;
+use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TSocketPool;
@@ -190,7 +191,8 @@ class ThriftConnection implements IConnection
       $this->socket()->setDebug(true);
       $this->socket()->setSendTimeout($this->_connectTimeout);
 
-      $this->_protocol = new TBinaryProtocolAccelerated($this->transport());
+      // TODO: Switch back to TBinaryProtocolAccelerated once HHVM is fixed
+      $this->_protocol = new TBinaryProtocol($this->transport());
       $this->_client   = new CassandraClient($this->_protocol);
 
       $this->transport()->open();
