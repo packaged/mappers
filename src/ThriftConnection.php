@@ -18,7 +18,6 @@ use cassandra\TimedOutException;
 use cassandra\UnavailableException;
 use Packaged\Mappers\Exceptions\CassandraException;
 use Thrift\Exception\TApplicationException;
-use Thrift\Exception\TException;
 use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TSocketPool;
@@ -27,7 +26,6 @@ class ThriftConnection implements IConnection
 {
   protected $_hosts;
   protected $_deadHosts = [];
-  protected $_deadHostsRetries = 1;
   protected $_port;
   protected $_persistConnection = false;
   protected $_recieveTimeout = 1000;
@@ -54,9 +52,14 @@ class ThriftConnection implements IConnection
    */
   protected $_stmtCache = [];
 
+  protected static $_hostRetryAttempts = 2;
+  protected $_thisHostAttemptsLeft;
+
+  protected static $_allHostsAttempts = 1;
+  protected $_allHostAttemptsLeft;
+
   public static function newConnection($config)
   {
-    $hosts = ['localhost'];
     if(isset($config['hosts']))
     {
       $hosts = (array)$config['hosts'];
@@ -64,6 +67,10 @@ class ThriftConnection implements IConnection
     else if(isset($config['host']))
     {
       $hosts = (array)$config['host'];
+    }
+    else
+    {
+      $hosts = ['localhost'];
     }
 
     if(isset($config['port']))
@@ -103,6 +110,9 @@ class ThriftConnection implements IConnection
   {
     $this->_hosts = $hosts;
     $this->_port  = $port;
+
+    $this->_thisHostAttemptsLeft = static::$_hostRetryAttempts;
+    $this->_allHostAttemptsLeft  = static::$_allHostsAttempts;
   }
 
   public function setConnectTimeout($timeout)
@@ -213,7 +223,7 @@ class ThriftConnection implements IConnection
     $this->_connected = false;
   }
 
-  public function dropHost($host = null)
+  protected function _dropHost($host = null)
   {
     if($host == null)
     {
@@ -221,8 +231,17 @@ class ThriftConnection implements IConnection
     }
     if($host)
     {
-      $this->_deadHosts[] = $host;
       $this->disconnect();
+      $this->_deadHosts[] = $host;
+      if($this->_allHostAttemptsLeft > 0)
+      {
+        $this->_thisHostAttemptsLeft = static::$_hostRetryAttempts;
+        if(!$this->getAvailableHosts())
+        {
+          $this->_allHostAttemptsLeft--;
+          $this->_deadHosts = [];
+        }
+      }
     }
   }
 
@@ -238,7 +257,9 @@ class ThriftConnection implements IConnection
     }
     catch(InvalidRequestException $e)
     {
-      throw new \Exception("The keyspace `$keyspace` could not be found", 404);
+      throw new CassandraException(
+        "The keyspace `$keyspace` could not be found", 404
+      );
     }
     return $this;
   }
@@ -250,21 +271,16 @@ class ThriftConnection implements IConnection
 
   /**
    * @return TSocketPool
-   * @throws TException
+   * @throws CassandraException
    */
   public function socket()
   {
     if(!$this->_socket)
     {
       $hosts = $this->getAvailableHosts();
-      if((!$hosts) && ($this->_deadHostsRetries-- > 0))
-      {
-        $this->_deadHosts = [];
-        $hosts            = $this->_hosts;
-      }
       if(!$hosts)
       {
-        throw new TException(
+        throw new CassandraException(
           'TSocketPool: All hosts in pool are down. ('
           . implode(',', $this->_hosts) . ')'
         );
@@ -367,35 +383,57 @@ class ThriftConnection implements IConnection
     $query, $compression = Compression::NONE, $allowStmtCache = true
   )
   {
-    try
+    while(true)
     {
-      $client   = $this->client();
-      $cacheKey = md5($query . '@' . $this->socket()->getHost());
-      if($allowStmtCache && (!empty($this->_stmtCache[$cacheKey])))
+      try
       {
-        $stmt = $this->_stmtCache[$cacheKey];
-      }
-      else
-      {
-        $prep = $client->prepare_cql3_query(
-          $query,
-          $compression
-        );
-        /**
-         * @var $prep CqlPreparedResult
-         */
-        $stmt = new ThriftCQLPreparedStatement($this, $prep);
-        if($allowStmtCache)
+        $client   = $this->client();
+        $cacheKey = md5($query . '@' . $this->socket()->getHost());
+        if($allowStmtCache && (!empty($this->_stmtCache[$cacheKey])))
         {
-          $this->_stmtCache[$cacheKey] = $stmt;
+          $stmt = $this->_stmtCache[$cacheKey];
+        }
+        else
+        {
+          $prep = $client->prepare_cql3_query(
+            $query,
+            $compression
+          );
+          /**
+           * @var $prep CqlPreparedResult
+           */
+          $stmt = new ThriftCQLPreparedStatement(
+            $this,
+            $prep,
+            $query,
+            $compression
+          );
+          if($allowStmtCache)
+          {
+            $this->_stmtCache[$cacheKey] = $stmt;
+          }
+
+          $this->_thisHostAttemptsLeft = static::$_hostRetryAttempts;
+        }
+        return $stmt;
+      }
+      catch(\Exception $e)
+      {
+        if(static::_isPermanentFailure($e))
+        {
+          throw $this->formException($e);
+        }
+        if($this->_thisHostAttemptsLeft <= 0 && $this->_allHostAttemptsLeft <= 0)
+        {
+          throw $this->formException($e);
+        }
+        if(--$this->_thisHostAttemptsLeft <= 0)
+        {
+          $this->_dropHost();
         }
       }
-      return $stmt;
     }
-    catch(\Exception $e)
-    {
-      throw $this->formException($e);
-    }
+    throw new CassandraException('Unable to prepare statement.');
   }
 
   /**
@@ -414,54 +452,92 @@ class ThriftConnection implements IConnection
   {
     if(!($statement instanceof ThriftCQLPreparedStatement))
     {
-      throw new \Exception(
+      throw new CassandraException(
         'Statement not an instance of ThriftCQLPreparedStatement'
       );
     }
 
-    try
+    //$retries = static::$_queryRetryCount;
+    while(true)
     {
-      $result = $this->client()->execute_prepared_cql3_query(
-        $statement->getQueryId(),
-        $parameters,
-        $consistency
-      );
-      /**
-       * @var $result CqlResult
-       */
-      if($result->type == CqlResultType::VOID)
+      try
       {
-        return true;
-      }
-
-      if($result->type == CqlResultType::INT)
-      {
-        return $result->num;
-      }
-
-      $returnRows = [];
-      foreach($result->rows as $row)
-      {
-        /**
-         * @var $row CqlRow
-         */
-        $resultRow = [];
-        foreach($row->columns as $column)
+        if(!$statement->isHost($this->socket()->getHost()))
         {
-          /**
-           * @var $column Column
-           */
-          $resultRow[$column->name] = $column->value;
+          $statement = $this->prepare(
+            $statement->getQuery(),
+            $statement->getCompression()
+          );
         }
 
-        $returnRows[] = $resultRow;
+        $result = $this->client()->execute_prepared_cql3_query(
+          $statement->getQueryId(),
+          $parameters,
+          $consistency
+        );
+        /**
+         * @var $result CqlResult
+         */
+        if($result->type == CqlResultType::VOID)
+        {
+          return true;
+        }
+
+        if($result->type == CqlResultType::INT)
+        {
+          return $result->num;
+        }
+
+        $returnRows = [];
+        foreach($result->rows as $row)
+        {
+          /**
+           * @var $row CqlRow
+           */
+          $resultRow = [];
+          foreach($row->columns as $column)
+          {
+            /**
+             * @var $column Column
+             */
+            $resultRow[$column->name] = $column->value;
+          }
+
+          $returnRows[] = $resultRow;
+        }
+
+        $this->_thisHostAttemptsLeft = static::$_hostRetryAttempts;
+        return $returnRows;
       }
-      return $returnRows;
+      catch(\Exception $e)
+      {
+        if(static::_isPermanentFailure($e))
+        {
+          throw $this->formException($e);
+        }
+        if($this->_thisHostAttemptsLeft <= 0 && $this->_allHostAttemptsLeft <= 0)
+        {
+          throw $this->formException($e);
+        }
+        if(--$this->_thisHostAttemptsLeft <= 0)
+        {
+          $this->_dropHost();
+        }
+      }
     }
-    catch(\Exception $e)
+    throw new CassandraException('Unable to execute Statement.');
+  }
+
+  protected static function _isPermanentFailure(\Exception $e)
+  {
+    if($e instanceof CassandraException &&
+      strpos($e->getMessage(), 'Index already exists') === 0
+    )
     {
-      throw $this->formException($e);
+      // never retry if index exists
+      return true;
     }
+    return false;
   }
 
   private function _clearStmtCache()

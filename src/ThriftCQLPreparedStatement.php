@@ -11,13 +11,19 @@ class ThriftCQLPreparedStatement implements IPreparedStatement
 {
   private $_rawStatement;
   private $_connection;
+  private $_query;
+  private $_compression;
+  private $_host;
 
   public function __construct(
-    ThriftConnection $connection, CqlPreparedResult $rawStatement
+    ThriftConnection $connection, CqlPreparedResult $rawStatement,
+    $query, $compression
   )
   {
-    $this->_connection = $connection;
+    $this->_connection   = $connection;
+    $this->_host         = $connection->socket()->getHost();
     $this->_rawStatement = $rawStatement;
+    $this->_query        = $query;
   }
 
   public function execute(array $params = [])
@@ -33,5 +39,20 @@ class ThriftCQLPreparedStatement implements IPreparedStatement
   public function getQueryId()
   {
     return $this->_rawStatement->itemId;
+  }
+
+  public function getQuery()
+  {
+    return $this->_query;
+  }
+
+  public function getCompression()
+  {
+    return $this->_compression;
+  }
+
+  public function isHost($host)
+  {
+    return $this->_host == $host;
   }
 }

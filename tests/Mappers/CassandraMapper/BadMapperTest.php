@@ -2,16 +2,29 @@
 namespace Mappers\CassandraMapper;
 
 use cassandra\ConsistencyLevel;
+use Packaged\Mappers\BaseMapper;
 use Packaged\Mappers\CassandraMapper;
-use Packaged\Mappers\ConnectionResolver;
+use Packaged\Mappers\Exceptions\CassandraException;
 use Packaged\Mappers\IPreparedStatement;
 use Packaged\Mappers\ThriftConnection;
-use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSocketPool;
 
 class BadMapperTest extends \PHPUnit_Framework_TestCase
 {
+  public static function setUpBeforeClass()
+  {
+    $resolver = BaseMapper::getConnectionResolver();
+    $resolver->addConnection(
+      'mock',
+      MockThriftConnection::newConnection(['hosts' => 'localhost'])
+    );
+    $resolver->addConnection(
+      'bad',
+      BadThriftConnection::newConnection(['hosts' => 'localhost'])
+    );
+  }
+
   /**
    * @expectedException     \Packaged\Mappers\Exceptions\CassandraException
    * @expectedExceptionMessage TSocketPool: All hosts in pool are down.
@@ -23,15 +36,34 @@ class BadMapperTest extends \PHPUnit_Framework_TestCase
     $mapper->save();
   }
 
-  /**
-   * @expectedException \Thrift\Exception\TException
-   * @expectedExceptionMessage TSocketPool: All hosts in pool are down. (localhost)
-   */
   public function testMockConnection()
   {
-    $mapper       = new MockCassandraMapper();
-    $mapper->test = 'test';
-    $mapper->save();
+    try
+    {
+      $mapper       = new MockCassandraMapper();
+      $mapper->test = 'test';
+      $mapper->save();
+    }
+    catch(CassandraException $e)
+    {
+      if(strpos(
+          $e->getMessage(),
+          'TSocketPool: All hosts in pool are down.'
+        ) !== 0
+      )
+      {
+        throw $e;
+      }
+    }
+
+    $conn = MockCassandraMapper::getConnection();
+    $this->assertInstanceOf(
+      '\Mappers\CassandraMapper\MockThriftConnection',
+      $conn
+    );
+
+    $this->assertEquals(0, $conn->getThisHostRetries());
+    $this->assertEquals(0, $conn->getAllHostsRetries());
   }
 }
 
@@ -56,6 +88,16 @@ class MockThriftConnection extends ThriftConnection
       $hosts, $this->_port, $this->_persistConnection
     );
   }
+
+  public function getThisHostRetries()
+  {
+    return $this->_thisHostAttemptsLeft;
+  }
+
+  public function getAllHostsRetries()
+  {
+    return $this->_allHostAttemptsLeft;
+  }
 }
 
 class MockCassandraMapper extends CassandraMapper
@@ -64,17 +106,7 @@ class MockCassandraMapper extends CassandraMapper
 
   public static function getServiceName()
   {
-    return 'db';
-  }
-
-  public static function getConnectionResolver()
-  {
-    $db = new MockThriftConnection(['localhost']);
-
-    $resolver = new ConnectionResolver();
-    $resolver->addConnection('db', $db);
-
-    return $resolver;
+    return 'mock';
   }
 }
 
@@ -87,11 +119,6 @@ class BadThriftConnection extends ThriftConnection
   {
     throw new \Exception('some error');
   }
-
-  public function client()
-  {
-    throw new TException('TSocketPool: All hosts in pool are down.');
-  }
 }
 
 class BadCassandraMapper extends CassandraMapper
@@ -100,16 +127,6 @@ class BadCassandraMapper extends CassandraMapper
 
   public static function getServiceName()
   {
-    return 'db';
-  }
-
-  public static function getConnectionResolver()
-  {
-    $db = new BadThriftConnection();
-
-    $resolver = new ConnectionResolver();
-    $resolver->addConnection('db', $db);
-
-    return $resolver;
+    return 'bad';
   }
 }

@@ -8,7 +8,6 @@
 
 namespace Packaged\Mappers;
 
-use Packaged\Mappers\Exceptions\CassandraException;
 use Packaged\Mappers\Exceptions\InvalidLoadException;
 use Packaged\Mappers\Exceptions\MapperException;
 
@@ -107,33 +106,20 @@ abstract class CassandraMapper extends BaseMapper
    */
   public static function execute($query, array $parameters = [])
   {
-    $retries = static::$_queryRetries;
-    $conn    = static::getConnection();
-    while($retries)
+    $conn = static::getConnection();
+    try
     {
-      try
-      {
-        $stmt = $conn->prepare($query);
-        return $stmt->execute($parameters);
-      }
-      catch(\Exception $e)
-      {
-        if(static::_handleException($e))
-        {
-          $conn->dropHost();
-          $retries--;
-          if(!$retries)
-          {
-            throw $e;
-          }
-        }
-        else
-        {
-          throw $e;
-        }
-      }
+      $stmt = $conn->prepare($query);
+      return $stmt->execute($parameters);
     }
-    throw new \Exception('Query not successful, but failed to throw exception');
+    catch(\Exception $e)
+    {
+      if(static::_handleException($e))
+      {
+        return static::execute($query, $parameters);
+      }
+      throw $e;
+    }
   }
 
   /**
@@ -156,15 +142,7 @@ abstract class CassandraMapper extends BaseMapper
       return true;
     }
 
-    if($e instanceof CassandraException &&
-      strpos($e->getMessage(), 'Index already exists') === 0
-    )
-    {
-      // never retry if index exists
-      return false;
-    }
-
-    return true;
+    return false;
   }
 
   /**
