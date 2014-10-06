@@ -19,7 +19,6 @@ use cassandra\UnavailableException;
 use Packaged\Mappers\Exceptions\CassandraException;
 use Thrift\Exception\TApplicationException;
 use Thrift\Protocol\TBinaryProtocol;
-use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TSocketPool;
 
@@ -385,6 +384,10 @@ class ThriftConnection implements IConnection
     $query, $compression = Compression::NONE, $allowStmtCache = true
   )
   {
+    if($compression === null)
+    {
+      $compression = Compression::NONE;
+    }
     while(true)
     {
       try
@@ -532,11 +535,8 @@ class ThriftConnection implements IConnection
 
   protected static function _isPermanentFailure(\Exception $e)
   {
-    if($e instanceof CassandraException &&
-      strpos($e->getMessage(), 'Index already exists') === 0
-    )
+    if($e instanceof InvalidRequestException)
     {
-      // never retry if index exists
       return true;
     }
     return false;
