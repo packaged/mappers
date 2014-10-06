@@ -14,15 +14,41 @@ class BadMapperTest extends \PHPUnit_Framework_TestCase
 {
   public static function setUpBeforeClass()
   {
+    $cassDb = \Packaged\Mappers\ThriftConnection::newConnection(
+      ['hosts' => 'localhost']
+    );
+    $cassDb->setConnectTimeout(1000);
+    $stmt = $cassDb->prepare(
+      'SELECT * FROM system.schema_keyspaces where keyspace_name = \'test_cassandra_mapper\''
+    );
+    if(!$cassDb->execute($stmt))
+    {
+      $stmt = $cassDb->prepare(
+        'CREATE KEYSPACE "test_cassandra_mapper" WITH replication = {\'class\':\'SimpleStrategy\', \'replication_factor\':1};'
+      );
+      $cassDb->execute($stmt);
+    }
+    $cassDb->setKeyspace('test_cassandra_mapper');
+
     $resolver = BaseMapper::getConnectionResolver();
     $resolver->addConnection(
       'mock',
-      MockThriftConnection::newConnection(['hosts' => 'localhost'])
+      MockThriftConnection::newConnection(['hosts' => 'localhost'])->setKeyspace('test_cassandra_mapper')
     );
     $resolver->addConnection(
       'bad',
-      BadThriftConnection::newConnection(['hosts' => 'localhost'])
+      ThriftConnection::newConnection(['hosts' => []])
     );
+  }
+
+  public static function tearDownAfterClass()
+  {
+    $cassDb = \Packaged\Mappers\ThriftConnection::newConnection(
+      ['hosts' => 'localhost']
+    );
+
+    $stmt = $cassDb->prepare('DROP KEYSPACE "test_cassandra_mapper"');
+    $stmt->execute();
   }
 
   /**
@@ -107,17 +133,6 @@ class MockCassandraMapper extends CassandraMapper
   public static function getServiceName()
   {
     return 'mock';
-  }
-}
-
-class BadThriftConnection extends ThriftConnection
-{
-  public function execute(
-    IPreparedStatement $statement, array $parameters = [],
-    $consistency = ConsistencyLevel::QUORUM
-  )
-  {
-    throw new \Exception('some error');
   }
 }
 
