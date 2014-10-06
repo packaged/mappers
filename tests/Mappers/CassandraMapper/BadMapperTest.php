@@ -1,11 +1,9 @@
 <?php
 namespace Mappers\CassandraMapper;
 
-use cassandra\ConsistencyLevel;
 use Packaged\Mappers\BaseMapper;
 use Packaged\Mappers\CassandraMapper;
 use Packaged\Mappers\Exceptions\CassandraException;
-use Packaged\Mappers\IPreparedStatement;
 use Packaged\Mappers\ThriftConnection;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TSocketPool;
@@ -33,7 +31,8 @@ class BadMapperTest extends \PHPUnit_Framework_TestCase
     $resolver = BaseMapper::getConnectionResolver();
     $resolver->addConnection(
       'mock',
-      MockThriftConnection::newConnection(['hosts' => 'localhost'])->setKeyspace('test_cassandra_mapper')
+      MockThriftConnection::newConnection(['hosts' => 'localhost'])
+        ->setKeyspace('test_cassandra_mapper')
     );
     $resolver->addConnection(
       'bad',
