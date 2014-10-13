@@ -58,7 +58,7 @@ abstract class CassandraMapper extends BaseMapper
     {
       foreach(static::_getMetadata()->fieldMappings as $map)
       {
-        if(isset($values[$map['columnName']]))
+        if(array_key_exists($map['columnName'], $values))
         {
           $values[$map['columnName']] = static::_unpack(
             $values[$map['columnName']],
@@ -245,13 +245,10 @@ abstract class CassandraMapper extends BaseMapper
     $map           = static::_getMetadata()->fieldMappings;
     foreach($changedFields as $field => $value)
     {
-      if($value !== null)
-      {
-        $changes[$map[$field]['columnName']] = self::_pack(
-          $value,
-          static::_getCqlFieldType($map[$field])
-        );
-      }
+      $changes[$map[$field]['columnName']] = self::_pack(
+        $value,
+        static::_getCqlFieldType($map[$field])
+      );
     }
     foreach(static::_getKeyFields() as $field)
     {
@@ -268,11 +265,25 @@ abstract class CassandraMapper extends BaseMapper
     // CQL Table
     if(count($changes) > 0)
     {
+      $columns = array_keys($changes);
+      $values  = [];
+      foreach($changes as $key => $val)
+      {
+        if($val === null)
+        {
+          $values[] = 'null';
+          unset($changes[$key]);
+        }
+        else
+        {
+          $values[] = '?';
+        }
+      }
       $query = sprintf(
         'INSERT INTO %s ("%s") VALUES (%s)',
         self::_escapeIdentifier(static::getTableName()),
-        implode('", "', array_keys($changes)),
-        implode(',', array_fill(0, count($changes), '?'))
+        implode('", "', $columns),
+        implode(',', $values)
       );
       static::execute($query, $changes);
       $this->setExists(true);
@@ -477,6 +488,20 @@ abstract class CassandraMapper extends BaseMapper
         }
       }
     }
+  }
+
+  public function getChangedFields()
+  {
+    $changed = parent::getChangedFields();
+    $doc     = $this->_getDocBlockProperties();
+    foreach($changed as $field => $value)
+    {
+      if($value === null && !$this->exists() && $doc[$field]->hasTag('static'))
+      {
+        unset($changed[$field]);
+      }
+    }
+    return $changed;
   }
 
   const CASSANDRA_TYPE_INTEGER = 'int';
