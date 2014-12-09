@@ -33,7 +33,7 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
       return \Doctrine\ORM\EntityManager::create(
         [
           'driver'   => 'pdo_mysql',
-          'host'     => 'localhost',
+          'host'     => 'localhost.dev',
           'dbname'   => 'cubex',
           'user'     => 'root',
           'password' => ''
@@ -268,5 +268,16 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
     $user->increment('countField', 100);
     $user->reload();
     $this->assertEquals(51, $user->countField);
+  }
+
+  public function testLoadWhere()
+  {
+    $user              = new User();
+    $user->name        = 'test ' . rand();
+    $user->description = '';
+    $user->save();
+
+    $users = User::loadWhere(['id' => [$user->id]]);
+    $this->assertEquals($user, $users[0]);
   }
 }

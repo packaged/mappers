@@ -99,6 +99,13 @@ abstract class DoctrineMapper extends BaseMapper
       {
         $crit->andWhere($v);
       }
+      elseif(is_array($v))
+      {
+        $expr = Criteria::expr();
+        $crit->andWhere(
+          $expr->andX($expr->in($k, $v))
+        );
+      }
       else
       {
         $expr = Criteria::expr();
