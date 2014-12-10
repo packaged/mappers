@@ -39,7 +39,7 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
       [
         'driver'   => 'pdo_mysql',
         'host'     => '127.0.0.1',
-        'dbname'   => 'cubex',
+        'dbname'   => 'packaged_mappers',
         'user'     => 'root',
         'password' => ''
       ],
