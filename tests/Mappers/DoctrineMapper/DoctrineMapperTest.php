@@ -33,7 +33,7 @@ class DoctrineMapperTest extends PHPUnit_Framework_TestCase
       return \Doctrine\ORM\EntityManager::create(
         [
           'driver'   => 'pdo_mysql',
-          'host'     => 'localhost.dev',
+          'host'     => '127.0.0.1',
           'dbname'   => 'cubex',
           'user'     => 'root',
           'password' => ''

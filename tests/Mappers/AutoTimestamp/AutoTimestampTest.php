@@ -38,7 +38,7 @@ class AutoTimestampTest extends PHPUnit_Framework_TestCase
     $db = EntityManager::create(
       [
         'driver'   => 'pdo_mysql',
-        'host'     => 'localhost',
+        'host'     => '127.0.0.1',
         'dbname'   => 'cubex',
         'user'     => 'root',
         'password' => ''

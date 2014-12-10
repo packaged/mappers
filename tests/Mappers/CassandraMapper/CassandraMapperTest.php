@@ -18,7 +18,7 @@ class CassandraMapperTest extends PHPUnit_Framework_TestCase
     require_once __DIR__ . '/IndexedMapper.php';
 
     $cassDb = \Packaged\Mappers\ThriftConnection::newConnection(
-      ['hosts' => 'localhost']
+      ['hosts' => '127.0.0.1']
     );
     $cassDb->setConnectTimeout(1000);
     $stmt = $cassDb->prepare(

@@ -13,7 +13,7 @@ class BadMapperTest extends \PHPUnit_Framework_TestCase
   public static function setUpBeforeClass()
   {
     $cassDb = \Packaged\Mappers\ThriftConnection::newConnection(
-      ['hosts' => 'localhost']
+      ['hosts' => '127.0.0.1']
     );
     $cassDb->setConnectTimeout(1000);
     $stmt = $cassDb->prepare(
@@ -31,7 +31,7 @@ class BadMapperTest extends \PHPUnit_Framework_TestCase
     $resolver = BaseMapper::getConnectionResolver();
     $resolver->addConnection(
       'mock',
-      MockThriftConnection::newConnection(['hosts' => 'localhost'])
+      MockThriftConnection::newConnection(['hosts' => '127.0.0.1'])
         ->setKeyspace('test_cassandra_mapper')
     );
     $resolver->addConnection(
@@ -43,7 +43,7 @@ class BadMapperTest extends \PHPUnit_Framework_TestCase
   public static function tearDownAfterClass()
   {
     $cassDb = \Packaged\Mappers\ThriftConnection::newConnection(
-      ['hosts' => 'localhost']
+      ['hosts' => '127.0.0.1']
     );
 
     $stmt = $cassDb->prepare('DROP KEYSPACE "test_cassandra_mapper"');
